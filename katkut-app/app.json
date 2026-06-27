@@ -30,7 +30,21 @@
     },
     "owner": "sanjayabhattarai",
     "plugins": [
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "KatKut needs access to your videos to build your reel. Clips stay on your device and are never uploaded."
+        }
+      ],
+      "expo-sharing",
+      [
+        "expo-media-library",
+        {
+          "savePhotosPermission": "KatKut saves your finished reel to your gallery.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ]
     ]
   }
 }

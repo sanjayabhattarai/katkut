@@ -17,11 +17,11 @@ export async function exportReel(edl: Edl, analyses: AnalysisClip[]): Promise<Ex
   const segments = edl.timeline.map((t) => {
     const uri = uriByClipId.get(t.clipId);
     if (!uri) throw new Error(`No source URI for ${t.clipId}`);
-    return { uri, inSec: t.in, outSec: t.out };
+    return { uri, inSec: t.in, outSec: t.out, muted: t.muted };
   });
 
   const outFile = new File(Paths.cache, `katkut_${Date.now()}.mp4`);
-  const { outputPath } = await VideoAssembler.assemble(segments, outFile.uri);
+  const { outputPath } = await VideoAssembler.assemble(segments, outFile.uri, edl.audioMode);
   const probed = await MediaProbe.probe(outputPath);
   return { outputPath, probed };
 }

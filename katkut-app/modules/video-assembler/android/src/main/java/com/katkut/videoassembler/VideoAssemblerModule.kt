@@ -13,6 +13,7 @@ class SegmentRecord : Record {
   @Field var uri: String = ""
   @Field var inSec: Double = 0.0
   @Field var outSec: Double = 0.0
+  @Field var muted: Boolean = true
 }
 
 class VideoAssemblerModule : Module() {
@@ -20,13 +21,14 @@ class VideoAssemblerModule : Module() {
     Name("VideoAssembler")
 
     // Trim+concat segments → one 1080x1920 MP4 at outputPath (a local filesystem path).
-    AsyncFunction("assemble") { segments: List<SegmentRecord>, outputPath: String ->
+    // audioMode: "smart" (per-clip muted flags) | "on" (all audio) | "off" (silent).
+    AsyncFunction("assemble") { segments: List<SegmentRecord>, outputPath: String, audioMode: String ->
       val context = appContext.reactContext
         ?: throw VideoAssemblerException("No React context available")
       val path = outputPath.removePrefix("file://")
-      val segs = segments.map { Segment(it.uri, it.inSec, it.outSec) }
+      val segs = segments.map { Segment(it.uri, it.inSec, it.outSec, it.muted) }
       try {
-        Transcoder(context).assemble(segs, path)
+        Transcoder(context).assemble(segs, path, audioMode)
       } catch (e: Exception) {
         throw VideoAssemblerException("Assemble failed: ${e.message}", e)
       }

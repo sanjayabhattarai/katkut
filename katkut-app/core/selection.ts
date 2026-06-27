@@ -1,4 +1,4 @@
-import { AnalysisClip, Edl, TimelineItem } from './types';
+import { AnalysisClip, AudioMode, Edl, TimelineItem } from './types';
 import { VibeConfig, DAILY_REEL } from './vibes';
 import { bestSegment, ClipCandidate } from './scoring';
 
@@ -56,8 +56,8 @@ export function selectTimeline(analyses: AnalysisClip[], vibe: VibeConfig = DAIL
     clipId: c.clipId,
     in: c.in,
     out: c.out,
-    // Smart default mutes most; Phase 4 (audio keep/mute, energy v1) sets this from meanAudioRMS.
-    muted: true,
+    // Smart default: keep audio on "loud sustained" clips, mute the rest (energy v1).
+    muted: c.meanAudioRMS < vibe.keepAudioThreshold,
   }));
 
   return {
@@ -66,4 +66,16 @@ export function selectTimeline(analyses: AnalysisClip[], vibe: VibeConfig = DAIL
     audioMode: vibe.audioMode,
     timeline,
   };
+}
+
+/**
+ * Apply the global audio toggle (Result screen). `smart` keeps the per-clip muted flags;
+ * `on` forces all audio on; `off` mutes everything. Returns a new EDL (does not mutate).
+ */
+export function applyAudioMode(edl: Edl, mode: AudioMode): Edl {
+  const timeline = edl.timeline.map((t) => ({
+    ...t,
+    muted: mode === 'on' ? false : mode === 'off' ? true : t.muted,
+  }));
+  return { ...edl, audioMode: mode, timeline };
 }

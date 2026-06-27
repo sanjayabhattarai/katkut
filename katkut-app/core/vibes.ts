@@ -21,6 +21,12 @@ export interface VibeConfig {
   keepThreshold: number;
   /** default audio behaviour for this vibe */
   audioMode: AudioMode;
+  /**
+   * Smart audio: keep a clip's original audio (muted=false) when its segment is "loud sustained"
+   * — mean loudness at/above this dBFS. Below it the clip is muted. Tunable; expect false positives
+   * (wind/handling noise), which the user overrides in the editor (Phase 3).
+   */
+  keepAudioThreshold: number;
 }
 
 /** v1 ships ONE preset (build order: "one preset, no polish"). */
@@ -38,6 +44,7 @@ export const DAILY_REEL: VibeConfig = {
   },
   keepThreshold: 0.45,
   audioMode: 'smart',
+  keepAudioThreshold: -25,
 };
 
 export const VIBES: Record<string, VibeConfig> = {

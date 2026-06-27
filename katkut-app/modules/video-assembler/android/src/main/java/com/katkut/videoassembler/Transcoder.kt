@@ -8,8 +8,14 @@ import android.media.MediaFormat
 import android.media.MediaMetadataRetriever
 import android.media.MediaMuxer
 import android.net.Uri
+import java.nio.ByteBuffer
 
-data class Segment(val uri: String, val inSec: Double, val outSec: Double)
+data class Segment(
+  val uri: String,
+  val inSec: Double,
+  val outSec: Double,
+  val muted: Boolean = true,
+)
 
 /**
  * Trim + concat a list of segments into one 1080x1920 H.264 MP4 using the hardware encoder.
@@ -18,8 +24,11 @@ data class Segment(val uri: String, val inSec: Double, val outSec: Double)
  */
 class Transcoder(private val context: Context) {
 
-  fun assemble(segments: List<Segment>, outputPath: String) {
+  fun assemble(segments: List<Segment>, outputPath: String, audioMode: String) {
     if (segments.isEmpty()) throw IllegalArgumentException("No segments to assemble")
+
+    // Build the audio track first so its format is known before muxer.start().
+    val encodedAudio = buildAudio(segments, audioMode)
 
     val encoderFormat = MediaFormat.createVideoFormat(MIME, OUT_W, OUT_H).apply {
       setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
@@ -37,6 +46,7 @@ class Transcoder(private val context: Context) {
 
     val muxer = MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
     val muxState = MuxState(muxer)
+    muxState.audio = encodedAudio
     val encInfo = MediaCodec.BufferInfo()
 
     var timelineUs = 0L
@@ -47,6 +57,14 @@ class Transcoder(private val context: Context) {
       // flush encoder
       encoder.signalEndOfInputStream()
       drainEncoder(encoder, muxState, encInfo, endOfStream = true)
+      // write the pre-encoded audio track (separate track, after all video samples)
+      if (encodedAudio != null && muxState.started) {
+        val audioInfo = MediaCodec.BufferInfo()
+        for (p in encodedAudio.packets) {
+          audioInfo.set(0, p.data.size, p.ptsUs, p.flags)
+          muxer.writeSampleData(muxState.audioTrack, ByteBuffer.wrap(p.data), audioInfo)
+        }
+      }
     } finally {
       try { encoder.stop() } catch (_: Exception) {}
       try { encoder.release() } catch (_: Exception) {}
@@ -56,6 +74,21 @@ class Transcoder(private val context: Context) {
       } catch (_: Exception) {}
       try { muxer.release() } catch (_: Exception) {}
     }
+  }
+
+  /** Resolve the per-clip mute flags against the global audioMode and encode the timeline audio. */
+  private fun buildAudio(segments: List<Segment>, audioMode: String): EncodedAudio? {
+    if (audioMode == "off") return null
+    val effective = segments.map {
+      val muted = when (audioMode) {
+        "on" -> false
+        else -> it.muted // "smart"
+      }
+      it.copy(muted = muted)
+    }
+    val needAudio = audioMode == "on" || effective.any { !it.muted }
+    if (!needAudio) return null
+    return AudioTimelineEncoder(context).encode(effective)
   }
 
   private fun transcodeSegment(
@@ -170,6 +203,7 @@ class Transcoder(private val context: Context) {
       } else if (outIdx == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
         if (muxState.started) throw IllegalStateException("format changed twice")
         muxState.videoTrack = muxState.muxer.addTrack(encoder.outputFormat)
+        muxState.audio?.let { muxState.audioTrack = muxState.muxer.addTrack(it.format) }
         muxState.muxer.start()
         muxState.started = true
       } else if (outIdx >= 0) {
@@ -206,6 +240,8 @@ class Transcoder(private val context: Context) {
   private class MuxState(val muxer: MediaMuxer) {
     var started = false
     var videoTrack = -1
+    var audioTrack = -1
+    var audio: EncodedAudio? = null
   }
 
   companion object {

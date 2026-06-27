@@ -6,7 +6,7 @@ import ProcessingScreen from './app/ProcessingScreen';
 import { PickedClip } from './app/types';
 import { exportReel, ExportResult } from './app/exportReel';
 import { saveToGallery, shareReel } from './app/share';
-import { AnalysisClip, Edl } from './core';
+import { AnalysisClip, AudioMode, Edl, applyAudioMode } from './core';
 
 type ExportState =
   | { kind: 'idle' }
@@ -23,6 +23,7 @@ export default function App() {
   const [edl, setEdl] = useState<Edl | null>(null);
   const [exportState, setExportState] = useState<ExportState>({ kind: 'idle' });
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
+  const [audioMode, setAudioMode] = useState<AudioMode>('smart');
 
   function handleContinue(picked: PickedClip[]) {
     setClips(picked);
@@ -39,7 +40,7 @@ export default function App() {
     if (!edl) return;
     setExportState({ kind: 'exporting' });
     try {
-      const result = await exportReel(edl, analyses);
+      const result = await exportReel(applyAudioMode(edl, audioMode), analyses);
       setExportState({ kind: 'done', result });
     } catch (e) {
       setExportState({ kind: 'error', message: e instanceof Error ? e.message : String(e) });
@@ -96,9 +97,13 @@ export default function App() {
           </Text>
           {edl.timeline.map((t) => (
             <Text key={t.clipId} style={styles.mono}>
-              {t.clipId}: {t.in.toFixed(1)}–{t.out.toFixed(1)}s{t.muted ? ' (muted)' : ''}
+              {t.clipId}: {t.in.toFixed(1)}–{t.out.toFixed(1)}s ·{' '}
+              {t.muted ? '🔇 muted' : '🔊 audio kept'}
             </Text>
           ))}
+          <Text style={styles.meta}>
+            (Smart decision above — loud sustained clips keep audio)
+          </Text>
 
           <Text style={[styles.h1, styles.spacer]}>Analysis summary</Text>
           {analyses.map((c) => {
@@ -115,6 +120,19 @@ export default function App() {
           })}
 
           <View style={styles.spacer}>
+            <Text style={styles.meta}>Audio mode (for export):</Text>
+            <View style={styles.btnRow}>
+              {(['smart', 'on', 'off'] as AudioMode[]).map((m) => (
+                <Button
+                  key={m}
+                  title={audioMode === m ? `[${m}]` : m}
+                  onPress={() => setAudioMode(m)}
+                />
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.spacer}>
             {exportState.kind === 'exporting' ? (
               <View style={styles.exportRow}>
                 <ActivityIndicator />
@@ -122,7 +140,7 @@ export default function App() {
               </View>
             ) : (
               <Button
-                title="Export reel"
+                title={`Export reel (audio: ${audioMode})`}
                 onPress={handleExport}
                 disabled={edl.timeline.length === 0}
               />

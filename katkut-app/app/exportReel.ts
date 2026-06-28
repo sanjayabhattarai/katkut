@@ -21,7 +21,8 @@ export async function exportReel(edl: Edl, analyses: AnalysisClip[]): Promise<Ex
   });
 
   const outFile = new File(Paths.cache, `katkut_${Date.now()}.mp4`);
-  const { outputPath } = await VideoAssembler.assemble(segments, outFile.uri, edl.audioMode);
+  // Audio is per-clip now (no global toggle): 'smart' tells native to honor each clip's muted flag.
+  const { outputPath } = await VideoAssembler.assemble(segments, outFile.uri, 'smart');
   const probed = await MediaProbe.probe(outputPath);
   return { outputPath, probed };
 }

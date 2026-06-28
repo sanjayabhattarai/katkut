@@ -4,3 +4,4 @@ export * from './types';
 export * from './vibes';
 export * from './scoring';
 export * from './selection';
+export * from './edl';

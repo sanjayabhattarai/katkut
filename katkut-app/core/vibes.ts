@@ -1,8 +1,8 @@
-import { AudioMode } from './types';
-
 /** Tunable knobs for one vibe/preset. Per-vibe MIN/MAX is just two numbers (see technical doc §3.4). */
 export interface VibeConfig {
   id: string;
+  /** display name — named after the feel delivered (e.g. "Snappy"), never a literal effect. */
+  label: string;
   /** clamp range for total reel length, seconds */
   minDuration: number;
   maxDuration: number;
@@ -19,8 +19,6 @@ export interface VibeConfig {
   };
   /** minimum clipScore for a clip to be a keeper */
   keepThreshold: number;
-  /** default audio behaviour for this vibe */
-  audioMode: AudioMode;
   /**
    * Smart audio: keep a clip's original audio (muted=false) when its segment is "loud sustained"
    * — mean loudness at/above this dBFS. Below it the clip is muted. Tunable; expect false positives
@@ -29,9 +27,10 @@ export interface VibeConfig {
   keepAudioThreshold: number;
 }
 
-/** v1 ships ONE preset (build order: "one preset, no polish"). */
+/** Default preset (v1 ships ONE vertical/preset; build order: "one preset, no polish"). */
 export const DAILY_REEL: VibeConfig = {
   id: 'daily_reel',
+  label: 'Balanced',
   minDuration: 60,
   maxDuration: 120,
   minSegment: 2.0,
@@ -43,10 +42,37 @@ export const DAILY_REEL: VibeConfig = {
     audio: 0.2,
   },
   keepThreshold: 0.45,
-  audioMode: 'smart',
   keepAudioThreshold: -25,
+};
+
+/**
+ * "Re-cut vibe" pacing variants (UI doc §4.5): regenerate the EDL from the SAME cached
+ * analyses — no re-analyze. Same scoring signals, just different pacing/strictness knobs.
+ */
+export const SNAPPY: VibeConfig = {
+  ...DAILY_REEL,
+  id: 'snappy',
+  label: 'Snappy',
+  minDuration: 45,
+  maxDuration: 90,
+  minSegment: 1.5,
+  maxSegment: 2.5,
+  keepThreshold: 0.55, // stricter → fewer, punchier clips
+};
+
+export const RELAXED: VibeConfig = {
+  ...DAILY_REEL,
+  id: 'relaxed',
+  label: 'Relaxed',
+  minDuration: 60,
+  maxDuration: 120,
+  minSegment: 3.0,
+  maxSegment: 5.0,
+  keepThreshold: 0.35, // looser → more clips, slower pace
 };
 
 export const VIBES: Record<string, VibeConfig> = {
   [DAILY_REEL.id]: DAILY_REEL,
+  [SNAPPY.id]: SNAPPY,
+  [RELAXED.id]: RELAXED,
 };

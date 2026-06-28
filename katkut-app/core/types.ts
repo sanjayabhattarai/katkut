@@ -34,8 +34,6 @@ export interface AnalysisClip {
   uri?: string;
 }
 
-export type AudioMode = 'smart' | 'on' | 'off';
-
 /** One segment on the output timeline (the editor mutates these). */
 export interface TimelineItem {
   clipId: string;
@@ -52,6 +50,5 @@ export interface Edl {
   vibe: string;
   /** total reel duration in seconds (sum of timeline segment lengths) */
   targetDuration: number;
-  audioMode: AudioMode;
   timeline: TimelineItem[];
 }

@@ -1,4 +1,4 @@
-import { AnalysisClip, AudioMode, Edl, TimelineItem } from './types';
+import { AnalysisClip, Edl, TimelineItem } from './types';
 import { VibeConfig, DAILY_REEL } from './vibes';
 import { bestSegment, ClipCandidate } from './scoring';
 
@@ -63,19 +63,6 @@ export function selectTimeline(analyses: AnalysisClip[], vibe: VibeConfig = DAIL
   return {
     vibe: vibe.id,
     targetDuration: Math.round(naturalLen * 10) / 10,
-    audioMode: vibe.audioMode,
     timeline,
   };
-}
-
-/**
- * Apply the global audio toggle (Result screen). `smart` keeps the per-clip muted flags;
- * `on` forces all audio on; `off` mutes everything. Returns a new EDL (does not mutate).
- */
-export function applyAudioMode(edl: Edl, mode: AudioMode): Edl {
-  const timeline = edl.timeline.map((t) => ({
-    ...t,
-    muted: mode === 'on' ? false : mode === 'off' ? true : t.muted,
-  }));
-  return { ...edl, audioMode: mode, timeline };
 }

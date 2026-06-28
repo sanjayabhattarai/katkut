@@ -44,7 +44,8 @@
           "savePhotosPermission": "KatKut saves your finished reel to your gallery.",
           "isAccessMediaLocationEnabled": false
         }
-      ]
+      ],
+      "expo-video"
     ]
   }
 }

@@ -35,9 +35,10 @@ class AudioTimelineEncoder(private val context: Context) {
     return encodeAac(pcm.toByteArray())
   }
 
+  private fun framesForDuration(durUs: Long): Int = (durUs * OUT_RATE / 1_000_000L).toInt()
+
   private fun appendSilence(out: ByteArrayOutputStream, durUs: Long) {
-    val frames = (durUs * OUT_RATE / 1_000_000L).toInt()
-    val bytes = ByteArray(frames * OUT_CHANNELS * 2) // zeros
+    val bytes = ByteArray(framesForDuration(durUs) * OUT_CHANNELS * 2) // zeros
     out.write(bytes)
   }
 
@@ -120,7 +121,12 @@ class AudioTimelineEncoder(private val context: Context) {
     }
 
     val resampled = resampleToStereo(srcBytes.toByteArray(), srcRate, srcChannels)
-    out.write(resampled)
+    // Force the segment's audio to be EXACTLY (out-in) long so audio and video segment
+    // durations stay identical across the timeline (otherwise audio drifts onto later clips).
+    val targetBytes = framesForDuration(durUs) * OUT_CHANNELS * 2
+    val fitted = ByteArray(targetBytes)
+    System.arraycopy(resampled, 0, fitted, 0, minOf(resampled.size, targetBytes))
+    out.write(fitted)
   }
 
   /** Convert interleaved 16-bit PCM (srcChannels @ srcRate) → interleaved stereo 16-bit @ OUT_RATE. */

@@ -34,5 +34,19 @@ class VideoAssemblerModule : Module() {
       }
       mapOf("outputPath" to outputPath)
     }
+
+    // Generate a low-res 720x1280 preview proxy of one source clip (whole clip, audio passed
+    // through) at outputPath. Preview-only; export still uses the full-res original.
+    AsyncFunction("makeProxy") { uri: String, outputPath: String ->
+      val context = appContext.reactContext
+        ?: throw VideoAssemblerException("No React context available")
+      val path = outputPath.removePrefix("file://")
+      try {
+        ProxyTranscoder(context).makeProxy(uri, path)
+      } catch (e: Exception) {
+        throw VideoAssemblerException("Proxy failed: ${e.message}", e)
+      }
+      mapOf("outputPath" to outputPath)
+    }
   }
 }

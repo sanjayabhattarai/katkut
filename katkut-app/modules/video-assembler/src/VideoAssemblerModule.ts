@@ -16,6 +16,12 @@ declare class VideoAssemblerModule extends NativeModule<{}> {
     outputPath: string,
     audioMode: AssembleAudioMode,
   ): Promise<{ outputPath: string }>;
+
+  /**
+   * Low-res 720x1280 preview proxy of one clip (whole clip, audio passed through) → outputPath.
+   * Preview-only; the original full-res file is untouched and used for export.
+   */
+  makeProxy(uri: string, outputPath: string): Promise<{ outputPath: string }>;
 }
 
 export default requireNativeModule<VideoAssemblerModule>('VideoAssembler');

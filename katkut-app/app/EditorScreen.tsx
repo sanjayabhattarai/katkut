@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Button,
   Pressable,
   StyleSheet,
   Text,
@@ -13,7 +12,6 @@ import ClipStrip from './ClipStrip';
 import { uriMapFromAnalyses } from './resultEdl';
 import { useClipThumbnails } from './useClipThumbnails';
 import { useEdlHistory } from './useEdlHistory';
-import { useReelExport } from './useReelExport';
 import { VideoAnalysis } from '../native';
 import {
   AnalysisClip,
@@ -28,7 +26,12 @@ import {
 export interface EditorScreenProps {
   analyses: AnalysisClip[];
   initialEdl: Edl;
-  onBack: () => void;
+  /** leaving the editor before export — parent auto-saves the current timeline as a draft */
+  onBack: (currentEdl: Edl) => void;
+  /** "Next" — hand the current timeline to the Export screen (compile + save + library) */
+  onExport: (currentEdl: Edl) => void;
+  /** clipId → low-res preview proxy (preview only; missing entries fall back to the original) */
+  proxyByClipId?: Map<string, string>;
 }
 
 function fmtTime(sec: number): string {
@@ -38,7 +41,7 @@ function fmtTime(sec: number): string {
   return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
 }
 
-export default function EditorScreen({ analyses, initialEdl, onBack }: EditorScreenProps) {
+export default function EditorScreen({ analyses, initialEdl, onBack, onExport, proxyByClipId }: EditorScreenProps) {
   const { edl, commit, undo, redo, canUndo, canRedo } = useEdlHistory(initialEdl);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
@@ -53,9 +56,13 @@ export default function EditorScreen({ analyses, initialEdl, onBack }: EditorScr
   // after an edit commits, re-seek the preview to the affected clip (runs post-render, EDL current)
   const pendingSeekRef = useRef<{ index: number; play: boolean } | null>(null);
 
-  const exp = useReelExport(allAnalyses);
-
   const uriByClipId = useMemo(() => uriMapFromAnalyses(allAnalyses), [allAnalyses]);
+  // preview plays low-res proxies (gapless); falls back to the original where a proxy is missing
+  const previewUriByClipId = useMemo(() => {
+    const m = uriMapFromAnalyses(allAnalyses);
+    if (proxyByClipId) for (const [clipId, uri] of proxyByClipId) m.set(clipId, uri);
+    return m;
+  }, [allAnalyses, proxyByClipId]);
   const durationByClipId = useMemo(() => {
     const m = new Map<string, number>();
     for (const a of allAnalyses) m.set(a.clipId, a.duration);
@@ -150,18 +157,14 @@ export default function EditorScreen({ analyses, initialEdl, onBack }: EditorScr
     <View style={styles.root}>
       {/* Top bar: close · resolution · Next */}
       <View style={styles.topBar}>
-        <Pressable hitSlop={10} onPress={onBack} style={styles.iconBtn}>
+        <Pressable hitSlop={10} onPress={() => onBack(edl)} style={styles.iconBtn}>
           <Text style={styles.closeIcon}>✕</Text>
         </Pressable>
         <View style={styles.topRight}>
           <View style={styles.resChip}>
             <Text style={styles.resText}>1080p</Text>
           </View>
-          <Pressable
-            style={styles.nextBtn}
-            onPress={() => exp.exportNow(edl)}
-            disabled={exp.state.kind === 'exporting'}
-          >
+          <Pressable style={styles.nextBtn} onPress={() => onExport(edl)}>
             <Text style={styles.nextText}>Next ›</Text>
           </Pressable>
         </View>
@@ -173,7 +176,7 @@ export default function EditorScreen({ analyses, initialEdl, onBack }: EditorScr
           <EdlPlayer
             ref={playerRef}
             edl={edl}
-            uriByClipId={uriByClipId}
+            uriByClipId={previewUriByClipId}
             fill
             loop
             onActiveIndexChange={setCurrentIndex}
@@ -233,33 +236,6 @@ export default function EditorScreen({ analyses, initialEdl, onBack }: EditorScr
         <View style={styles.overlay}>
           <ActivityIndicator size="large" color="#fff" />
           <Text style={styles.overlayText}>Analyzing new clips…</Text>
-        </View>
-      )}
-
-      {exp.state.kind === 'exporting' && (
-        <View style={styles.overlay}>
-          <ActivityIndicator size="large" color="#fff" />
-          <Text style={styles.overlayText}>Exporting 1080×1920 MP4…</Text>
-        </View>
-      )}
-
-      {exp.state.kind === 'done' && (
-        <View style={styles.overlay}>
-          <Text style={styles.overlayTitle}>Exported ✓</Text>
-          <View style={styles.overlayRow}>
-            <Button title="Save to gallery" onPress={exp.save} />
-            <Button title="Share" onPress={exp.share} />
-          </View>
-          {exp.saveMsg && <Text style={styles.overlayText}>{exp.saveMsg}</Text>}
-          <Button title="Close" onPress={exp.dismiss} />
-        </View>
-      )}
-
-      {exp.state.kind === 'error' && (
-        <View style={styles.overlay}>
-          <Text style={styles.overlayTitle}>Export failed</Text>
-          <Text style={styles.overlayText}>{exp.state.message}</Text>
-          <Button title="Close" onPress={exp.dismiss} />
         </View>
       )}
     </View>

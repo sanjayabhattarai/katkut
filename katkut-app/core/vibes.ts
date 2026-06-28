@@ -71,8 +71,66 @@ export const RELAXED: VibeConfig = {
   keepThreshold: 0.35, // looser → more clips, slower pace
 };
 
+/**
+ * Vibe/style presets surfaced in the picker sheet ("what type of video is this?").
+ * NOTE: these re-weight the EXISTING analysis signals (sharpness / exposure / freeze / audio)
+ * and pacing — we do NOT yet measure motion vectors, so "Travel favors action" is approximated
+ * via looser/snappier knobs rather than true motion analysis (a later enhancement).
+ */
+export const AUTO: VibeConfig = {
+  ...DAILY_REEL,
+  id: 'auto',
+  label: 'Auto',
+};
+
+export const FOOD: VibeConfig = {
+  ...DAILY_REEL,
+  id: 'food_vlog',
+  label: 'Food',
+  minDuration: 20,
+  maxDuration: 45,
+  minSegment: 2.0,
+  maxSegment: 4.0,
+  // appetizing close-ups: reward sharpness + good exposure
+  weights: { sharp: 1.2, exposure: 0.9, frozenPenalty: 1.3, audio: 0.2 },
+  keepThreshold: 0.45,
+};
+
+export const TRAVEL: VibeConfig = {
+  ...DAILY_REEL,
+  id: 'travel_vlog',
+  label: 'Travel',
+  minDuration: 45,
+  maxDuration: 100,
+  minSegment: 1.5,
+  maxSegment: 3.0,
+  // scenic + lively: looser keep, snappier cuts (proxy for "action" until we add motion vectors)
+  weights: { sharp: 1.0, exposure: 0.7, frozenPenalty: 1.8, audio: 0.3 },
+  keepThreshold: 0.4,
+};
+
+export const COOKING: VibeConfig = {
+  ...DAILY_REEL,
+  id: 'cooking',
+  label: 'Cooking',
+  minDuration: 30,
+  maxDuration: 90,
+  minSegment: 2.5,
+  maxSegment: 5.0,
+  // steady process shots held longer; don't over-penalize near-static (steady ≠ frozen)
+  weights: { sharp: 1.1, exposure: 0.6, frozenPenalty: 0.9, audio: 0.2 },
+  keepThreshold: 0.4,
+};
+
 export const VIBES: Record<string, VibeConfig> = {
   [DAILY_REEL.id]: DAILY_REEL,
   [SNAPPY.id]: SNAPPY,
   [RELAXED.id]: RELAXED,
+  [AUTO.id]: AUTO,
+  [FOOD.id]: FOOD,
+  [TRAVEL.id]: TRAVEL,
+  [COOKING.id]: COOKING,
 };
+
+/** The vibe options shown in the selector sheet, in display order. */
+export const VIBE_CHOICES: VibeConfig[] = [AUTO, FOOD, TRAVEL, COOKING];

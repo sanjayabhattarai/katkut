@@ -43,4 +43,5 @@ yarn-error.*
 # local Expo module build artifacts
 modules/*/android/build/
 modules/*/android/.cxx/
+modules/*/android/.gradle/
 modules/*/ios/build/

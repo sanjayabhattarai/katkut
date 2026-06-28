@@ -20,6 +20,8 @@ export interface EdlPlayerProps {
   /** fired when the currently-playing segment changes (drives the strip's blue border) */
   onActiveIndexChange?: (index: number) => void;
   onPlayingChange?: (playing: boolean) => void;
+  /** elapsed position and total length across the whole timeline (seconds) */
+  onProgress?: (currentSec: number, totalSec: number) => void;
 }
 
 const SWAP_EPSILON_SEC = 0.06;
@@ -30,7 +32,7 @@ const SWAP_EPSILON_SEC = 0.06;
  * Single player avoids Android hardware-decoder exhaustion (two players freeze on real devices).
  */
 const EdlPlayer = forwardRef<EdlPlayerHandle, EdlPlayerProps>(function EdlPlayer(
-  { edl, uriByClipId, loop = true, fill = false, onActiveIndexChange, onPlayingChange },
+  { edl, uriByClipId, loop = true, fill = false, onActiveIndexChange, onPlayingChange, onProgress },
   ref,
 ) {
   const player = useVideoPlayer(null, (p) => {
@@ -40,10 +42,26 @@ const EdlPlayer = forwardRef<EdlPlayerHandle, EdlPlayerProps>(function EdlPlayer
 
   const indexRef = useRef(0);
   const loadingRef = useRef(false);
+  const loadedUriRef = useRef<string | null>(null);
   const edlRef = useRef(edl);
   edlRef.current = edl;
-  const cbRef = useRef({ onActiveIndexChange, onPlayingChange });
-  cbRef.current = { onActiveIndexChange, onPlayingChange };
+  const cbRef = useRef({ onActiveIndexChange, onPlayingChange, onProgress });
+  cbRef.current = { onActiveIndexChange, onPlayingChange, onProgress };
+
+  // global timeline position: elapsed before the current segment + offset inside it
+  const reportProgress = useCallback((i: number, currentTime: number) => {
+    const timeline = edlRef.current.timeline;
+    let before = 0;
+    let total = 0;
+    for (let k = 0; k < timeline.length; k++) {
+      const len = Math.max(0, timeline[k].out - timeline[k].in);
+      if (k < i) before += len;
+      total += len;
+    }
+    const seg = timeline[i];
+    const within = seg ? Math.min(Math.max(currentTime - seg.in, 0), Math.max(0, seg.out - seg.in)) : 0;
+    cbRef.current.onProgress?.(before + within, total);
+  }, []);
 
   const load = useCallback(
     async (i: number, play: boolean) => {
@@ -52,14 +70,30 @@ const EdlPlayer = forwardRef<EdlPlayerHandle, EdlPlayerProps>(function EdlPlayer
       if (!seg) return;
       const uri = uriByClipId.get(seg.clipId);
       if (!uri) return;
-      loadingRef.current = true;
       indexRef.current = i;
       cbRef.current.onActiveIndexChange?.(i);
+
+      // Same source already loaded (e.g. trimming the clip currently shown): just
+      // re-seek. Re-loading the identical URI via replaceAsync can hang the Android
+      // decoder — leaving loadingRef stuck true — which freezes the preview and
+      // makes play() do nothing. So never replaceAsync when the URI is unchanged.
+      if (loadedUriRef.current === uri) {
+        player.muted = seg.muted;
+        player.currentTime = seg.in;
+        reportProgress(i, seg.in);
+        if (play) player.play();
+        else player.pause();
+        return;
+      }
+
+      loadingRef.current = true;
       try {
         player.pause();
         await player.replaceAsync({ uri });
+        loadedUriRef.current = uri;
         player.muted = seg.muted;
         player.currentTime = seg.in;
+        reportProgress(i, seg.in);
         if (play) player.play();
         else player.pause();
       } catch {
@@ -68,7 +102,7 @@ const EdlPlayer = forwardRef<EdlPlayerHandle, EdlPlayerProps>(function EdlPlayer
         loadingRef.current = false;
       }
     },
-    [player, uriByClipId],
+    [player, uriByClipId, reportProgress],
   );
 
   useImperativeHandle(
@@ -96,6 +130,7 @@ const EdlPlayer = forwardRef<EdlPlayerHandle, EdlPlayerProps>(function EdlPlayer
       const i = indexRef.current;
       const seg = timeline[i];
       if (!seg) return;
+      reportProgress(i, e.currentTime);
       if (e.currentTime < seg.out - SWAP_EPSILON_SEC) return;
       const isLast = i >= timeline.length - 1;
       if (isLast) {
@@ -106,7 +141,7 @@ const EdlPlayer = forwardRef<EdlPlayerHandle, EdlPlayerProps>(function EdlPlayer
       }
     });
     return () => sub.remove();
-  }, [player, loop, load]);
+  }, [player, loop, load, reportProgress]);
 
   // report play/pause changes
   useEffect(() => {

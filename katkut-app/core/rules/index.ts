@@ -5,6 +5,7 @@ import { assembleEdl } from '../selection';
 import { VibeRule, VibeRunParams } from './types';
 import { autoRule } from './auto';
 import { foodRule } from './food';
+import { travelRule } from './travel';
 import { makeGenericRule } from './generic';
 
 export type { VibeRule, VibeRunParams } from './types';
@@ -13,6 +14,7 @@ export type { VibeRule, VibeRunParams } from './types';
 const RULES: Record<string, VibeRule> = {
   auto: autoRule,
   food_cooking: foodRule,
+  travel_adventure: travelRule,
 };
 
 export function getVibeRule(vibeId: string): VibeRule {

@@ -9,4 +9,5 @@ export { default as VideoAssembler } from '../modules/video-assembler';
 export type {
   AssembleSegment,
   ExportResolution,
+  PhotoMotionType,
 } from '../modules/video-assembler/src/VideoAssemblerModule';

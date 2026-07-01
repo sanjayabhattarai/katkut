@@ -1,6 +1,7 @@
 import { File, Paths } from 'expo-file-system';
 import { VideoAssembler, MediaProbe, MediaProbeResult, ExportResolution } from '../native';
 import { AnalysisClip, Edl } from '../core';
+import { renderPhotoClip } from './photoClips';
 
 export interface ExportResult {
   outputPath: string;
@@ -19,11 +20,23 @@ export async function exportReel(
     if (a.uri) uriByClipId.set(a.clipId, a.uri);
   }
 
-  const segments = edl.timeline.map((t) => {
+  // Export canvas: full 1080x1920 (HARD RULE 2), or 720x1280 for the fast option.
+  const dims = resolution === '720p' ? { w: 720, h: 1280 } : { w: 1080, h: 1920 };
+
+  // Build segments in order. Photos are pre-rendered into a matching-resolution MP4 (still + motion)
+  // so the existing concat path handles them like any video clip. Rendered sequentially — one
+  // hardware encoder at a time.
+  const segments: { uri: string; inSec: number; outSec: number; muted: boolean }[] = [];
+  for (const t of edl.timeline) {
     const uri = uriByClipId.get(t.clipId);
     if (!uri) throw new Error(`No source URI for ${t.clipId}`);
-    return { uri, inSec: t.in, outSec: t.out, muted: t.muted };
-  });
+    if (t.kind === 'photo') {
+      const clipPath = await renderPhotoClip(t, uri, dims.w, dims.h);
+      segments.push({ uri: clipPath, inSec: 0, outSec: Math.max(0, t.out - t.in), muted: true });
+    } else {
+      segments.push({ uri, inSec: t.in, outSec: t.out, muted: t.muted });
+    }
+  }
 
   const outFile = new File(Paths.cache, `katkut_${Date.now()}.mp4`);
   // Audio is per-clip now (no global toggle): 'smart' tells native to honor each clip's muted flag.

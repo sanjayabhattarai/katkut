@@ -11,10 +11,24 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Sparkles } from 'lucide-react-native';
 import { VideoAnalysis } from '../native';
-import { AnalysisClip, Edl, buildReel } from '../core';
+import { AnalysisClip, Edl, PhotoRef, PHOTO_DURATION, buildReel } from '../core';
 import { generateProxies } from './proxies';
 import { PickedClip } from './types';
 import { space } from './theme';
+
+/** Photo → a degenerate AnalysisClip (no windows). It's skipped by video selection but carries its
+ *  uri through the shared clipId→uri map so preview/export can find the still. */
+function photoAnalysisClip(p: PickedClip): AnalysisClip {
+  const orientation =
+    p.width != null && p.height != null
+      ? p.width > p.height
+        ? 'landscape'
+        : p.width < p.height
+          ? 'portrait'
+          : 'square'
+      : 'portrait';
+  return { clipId: p.clipId, duration: PHOTO_DURATION, orientation, sceneCuts: [], windows: [], uri: p.uri };
+}
 
 export interface ProcessingScreenProps {
   clips: PickedClip[];
@@ -96,29 +110,36 @@ export default function ProcessingScreen({
     startedRef.current = true;
 
     (async () => {
+      // Videos get analyzed + trimmed; photos skip analysis and become fixed 0.5s stills at the end.
+      const videos = clips.filter((c) => c.kind !== 'photo');
+      const photoClips = clips.filter((c) => c.kind === 'photo');
       const analyses: AnalysisClip[] = [];
       try {
         setProgress(0.05);
-        setStatusText('Uploading clips... (1/1)');
-        
-        for (let i = 0; i < clips.length; i++) {
-          setProgress(0.05 + (i / clips.length) * 0.6);
-          setStatusText(`Processing clip ${i + 1} of ${clips.length}...`);
-          const result = await VideoAnalysis.analyze(clips[i].uri, clips[i].clipId);
+        setStatusText('Reading your clips...');
+
+        for (let i = 0; i < videos.length; i++) {
+          setProgress(0.05 + (i / Math.max(1, videos.length)) * 0.6);
+          setStatusText(`Processing clip ${i + 1} of ${videos.length}...`);
+          const result = await VideoAnalysis.analyze(videos[i].uri, videos[i].clipId);
           analyses.push(result);
         }
-        
+
         setProgress(0.65);
         setStatusText('AI is watching your videos...');
         const length = lengthRange ?? { min: 30, max: 60 };
+        const photos: PhotoRef[] = photoClips.map((p) => ({ clipId: p.clipId, uri: p.uri }));
+        // photos flow through the shared clipId→uri map (as degenerate analyses) for preview/export
+        const allAnalyses = [...analyses, ...photoClips.map(photoAnalysisClip)];
 
         await new Promise(r => setTimeout(r, 800));
 
         setProgress(0.72);
         setStatusText('Designing the timeline...');
-        // per-vibe rules (core/rules) build the cut from the chosen vibe + length
-        const selected = buildReel(analyses, vibeId, { lengthMin: length.min, lengthMax: length.max });
-        // "Mute all" (default) overrides the Smart per-clip mute; "No" keeps Smart's flags
+        // per-vibe rules (core/rules) build the cut from the chosen vibe + length; photos appended last
+        const selected = buildReel(analyses, vibeId, { lengthMin: length.min, lengthMax: length.max }, photos);
+        // "Mute all" (default) overrides the Smart per-clip mute; "No" keeps Smart's flags.
+        // Photos are already muted and stay muted either way.
         const edl = muteAll
           ? { ...selected, timeline: selected.timeline.map((t) => ({ ...t, muted: true })) }
           : selected;
@@ -127,7 +148,7 @@ export default function ProcessingScreen({
 
         setProgress(0.78);
         setStatusText('Rendering previews...');
-        const proxies = await generateProxies(analyses, edl, (d, n) =>
+        const proxies = await generateProxies(allAnalyses, edl, (d, n) =>
           setProgress(0.78 + (n ? (d / n) * 0.22 : 0.22)),
         );
         
@@ -137,7 +158,7 @@ export default function ProcessingScreen({
         if (messageTimerRef.current) clearInterval(messageTimerRef.current);
         
         setTimeout(() => {
-          onDone(analyses, edl, proxies);
+          onDone(allAnalyses, edl, proxies);
         }, 600);
         
       } catch (e) {

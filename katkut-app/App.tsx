@@ -47,7 +47,7 @@ export default function App() {
     setPickingClips(true);
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['videos'],
+        mediaTypes: ['videos', 'images'],
         allowsMultipleSelection: true,
         selectionLimit: 0,
         quality: 1,
@@ -56,9 +56,10 @@ export default function App() {
 
       const picked: PickedClip[] = result.assets.map((a, i) => ({
         clipId: clipIdForIndex(i),
+        kind: a.type === 'image' ? 'photo' : 'video',
         uri: a.uri,
         fileName: a.fileName ?? null,
-        durationMs: a.duration ?? null,
+        durationMs: a.type === 'image' ? null : a.duration ?? null,
         width: a.width ?? null,
         height: a.height ?? null,
       }));

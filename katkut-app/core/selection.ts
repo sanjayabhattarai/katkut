@@ -1,6 +1,33 @@
-import { AnalysisClip, Edl, TimelineItem } from './types';
+import { AnalysisClip, Edl, PhotoMotion, PhotoRef, TimelineItem } from './types';
 import { VibeConfig, DAILY_REEL } from './vibes';
 import { bestSegment, ClipCandidate } from './scoring';
+
+/**
+ * Every photo occupies this fixed duration on the timeline, for every vibe. It's 1.0s (not 0.5s)
+ * because photos carry Ken Burns motion (see photoMotionForIndex) — ~30 frames is enough for the
+ * slow zoom/pan to actually read; 0.5s would make the motion imperceptible.
+ */
+export const PHOTO_DURATION = 1.0;
+
+/** More than this many photos → montage mode (crossfades between the stills). */
+export const PHOTO_MONTAGE_THRESHOLD = 4;
+/** Crossfade length between photos in montage mode. */
+export const PHOTO_CROSSFADE_MS = 120;
+
+/**
+ * Alternating Ken Burns motion so a run of photos never feels identical: push-in, pan across,
+ * pull-back, pan the other way, repeat. Decided here in core/; native renders it.
+ */
+const PHOTO_MOTION_CYCLE: PhotoMotion[] = [
+  { type: 'zoomIn', amount: 0.08 },
+  { type: 'panLR', amount: 0.08 },
+  { type: 'zoomOut', amount: 0.08 },
+  { type: 'panRL', amount: 0.08 },
+];
+
+export function photoMotionForIndex(i: number): PhotoMotion {
+  return PHOTO_MOTION_CYCLE[i % PHOTO_MOTION_CYCLE.length];
+}
 
 /** Order keepers chronologically. We have no cross-clip capture time in v1, so clipId
  *  (clip_01, clip_02, … assigned in picker order) is the chronological proxy. */
@@ -60,6 +87,37 @@ export function assembleEdl(candidates: ClipCandidate[], vibe: VibeConfig): Edl 
     vibe: vibe.id,
     targetDuration: Math.round(naturalLen * 10) / 10,
     timeline,
+  };
+}
+
+/**
+ * Append the user's photos to a video EDL as fixed-duration stills. Photos always land LAST and
+ * always at PHOTO_DURATION, for every vibe — they are not scored, selected, or length-clamped
+ * (the user can reposition them later in the editor). Each is muted (a still has no audio) and
+ * carries alternating Ken Burns motion so the reel keeps momentum. When there are more than
+ * PHOTO_MONTAGE_THRESHOLD photos, montage mode adds a short crossfade between the stills.
+ * Photo order is preserved (pick order). targetDuration grows by the photos' total length.
+ */
+export function appendPhotos(edl: Edl, photos: PhotoRef[]): Edl {
+  if (photos.length === 0) return edl;
+
+  const montage = photos.length > PHOTO_MONTAGE_THRESHOLD;
+
+  const photoItems: TimelineItem[] = photos.map((p, i) => ({
+    clipId: p.clipId,
+    in: 0,
+    out: PHOTO_DURATION,
+    muted: true,
+    kind: 'photo',
+    motion: photoMotionForIndex(i),
+    ...(montage ? { crossfadeMs: PHOTO_CROSSFADE_MS } : {}),
+  }));
+
+  const added = PHOTO_DURATION * photos.length;
+  return {
+    ...edl,
+    timeline: [...edl.timeline, ...photoItems],
+    targetDuration: Math.round((edl.targetDuration + added) * 10) / 10,
   };
 }
 

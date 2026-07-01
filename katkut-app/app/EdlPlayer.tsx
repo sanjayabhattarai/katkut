@@ -43,7 +43,12 @@ const EdlPlayer = forwardRef<EdlPlayerHandle, EdlPlayerProps>(function EdlPlayer
     () =>
       edl.timeline.flatMap((t) => {
         const uri = uriByClipId.get(t.clipId);
-        return uri ? [{ uri, inSec: t.in, outSec: t.out, muted: t.muted }] : [];
+        if (!uri) return [];
+        // A photo plays only via its rendered .mp4 clip (still + motion). If we only resolved the
+        // raw image (e.g. a reopened draft before proxies exist), skip it rather than feed the
+        // video player an image it can't decode.
+        if (t.kind === 'photo' && !uri.endsWith('.mp4')) return [];
+        return [{ uri, inSec: t.in, outSec: t.out, muted: t.muted }];
       }),
     [edl, uriByClipId],
   );

@@ -1,7 +1,7 @@
-import { AnalysisClip, Edl } from '../types';
+import { AnalysisClip, Edl, PhotoRef } from '../types';
 import { VIBES, AUTO } from '../vibes';
 import { bestSegment, ClipCandidate } from '../scoring';
-import { assembleEdl } from '../selection';
+import { assembleEdl, appendPhotos } from '../selection';
 import { VibeRule, VibeRunParams } from './types';
 import { autoRule } from './auto';
 import { foodRule } from './food';
@@ -28,8 +28,14 @@ export function getVibeRule(vibeId: string): VibeRule {
 /**
  * Build the reel for a vibe + the user's length choice, applying that vibe's rules:
  * hard-reject junk clips → best segment per clip → refine its cut points → assemble the EDL.
+ * Any photos are appended last as fixed 0.5s stills (not scored or clamped) — see appendPhotos.
  */
-export function buildReel(analyses: AnalysisClip[], vibeId: string, params: VibeRunParams): Edl {
+export function buildReel(
+  analyses: AnalysisClip[],
+  vibeId: string,
+  params: VibeRunParams,
+  photos: PhotoRef[] = [],
+): Edl {
   const rule = getVibeRule(vibeId);
   const cfg = rule.resolveConfig(params);
 
@@ -41,5 +47,5 @@ export function buildReel(analyses: AnalysisClip[], vibeId: string, params: Vibe
     })
     .filter((c): c is ClipCandidate => c !== null);
 
-  return assembleEdl(candidates, cfg);
+  return appendPhotos(assembleEdl(candidates, cfg), photos);
 }

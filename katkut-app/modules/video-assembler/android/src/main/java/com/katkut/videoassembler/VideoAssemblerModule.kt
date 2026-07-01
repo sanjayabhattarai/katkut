@@ -35,6 +35,20 @@ class VideoAssemblerModule : Module() {
       mapOf("outputPath" to outputPath)
     }
 
+    // Render one still photo into a short H.264 MP4 (video-only) with Ken Burns motion, sized
+    // w x h. The result is a normal MP4, so preview + concat/export consume it like a video clip.
+    AsyncFunction("renderPhoto") { uri: String, outputPath: String, width: Int, height: Int, durationSec: Double, motionType: String, motionAmount: Double ->
+      val context = appContext.reactContext
+        ?: throw VideoAssemblerException("No React context available")
+      val path = outputPath.removePrefix("file://")
+      try {
+        PhotoClipEncoder(context).render(uri, path, width, height, durationSec, motionType, motionAmount)
+      } catch (e: Exception) {
+        throw VideoAssemblerException("Photo render failed: ${e.message}", e)
+      }
+      mapOf("outputPath" to outputPath)
+    }
+
     // Generate a low-res 720x1280 preview proxy of one source clip (whole clip, audio passed
     // through) at outputPath. Preview-only; export still uses the full-res original.
     AsyncFunction("makeProxy") { uri: String, outputPath: String ->

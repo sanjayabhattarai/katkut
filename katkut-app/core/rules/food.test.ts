@@ -68,10 +68,10 @@ describe('foodRule.rejectClip', () => {
 // ─── resolveConfig ────────────────────────────────────────────────────────────
 
 describe('foodRule.resolveConfig', () => {
-  it('always produces 0.5–1.5s segment range regardless of chosen length', () => {
+  it('always produces 1.0–1.5s segment range regardless of chosen length', () => {
     for (const [min, max] of [[0, 30], [30, 60], [60, 90], [90, 120], [120, 300]] as const) {
       const cfg = foodRule.resolveConfig({ lengthMin: min, lengthMax: max });
-      expect(cfg.minSegment).toBe(0.5);
+      expect(cfg.minSegment).toBe(1.0);
       expect(cfg.maxSegment).toBe(1.5);
     }
   });
@@ -97,10 +97,10 @@ describe('foodRule.resolveConfig', () => {
 // ─── refineSegment ────────────────────────────────────────────────────────────
 
 describe('foodRule.refineSegment', () => {
-  const cfg = foodRule.resolveConfig({ lengthMin: 0, lengthMax: 60 }); // minSegment=0.5, maxSegment=1.5
+  const cfg = foodRule.resolveConfig({ lengthMin: 0, lengthMax: 60 }); // minSegment=1.0, maxSegment=1.5
 
   it('snaps to the first scene cut in range — not just the closest', () => {
-    // Two scene cuts at 1.2s and 1.4s. Both are within the 0.5–1.5s window.
+    // Two scene cuts at 1.2s and 1.4s. Both are within the 1.0–1.5s window.
     // Food rule picks the FIRST (1.2s) — earliest action moment.
     const c = clip('c', [win(0), win(1), win(2), win(3)], { sceneCuts: [1.2, 1.4], duration: 4 });
     const cand = { clipId: 'c', in: 0.0, out: 1.0, score: 0.8, meanAudioRMS: -30 };
@@ -108,29 +108,29 @@ describe('foodRule.refineSegment', () => {
     expect(refined.out).toBe(1.2);
   });
 
-  it('produces a segment at least minSegment (0.5s) long', () => {
-    // scene cut at 0.7s — within [0.5, 1.5], so out = 0.7
-    const c = clip('c', [win(0), win(1)], { sceneCuts: [0.7], duration: 2 });
+  it('produces a segment at least minSegment (1.0s) long', () => {
+    // scene cut at 1.3s — within [1.0, 1.5], so out = 1.3
+    const c = clip('c', [win(0), win(1)], { sceneCuts: [1.3], duration: 2 });
     const cand = { clipId: 'c', in: 0.0, out: 1.0, score: 0.8, meanAudioRMS: -30 };
     const refined = foodRule.refineSegment(c, cand, cfg);
     expect(refined.out - refined.in).toBeGreaterThanOrEqual(cfg.minSegment);
   });
 
   it('ignores scene cuts outside the valid [minOut, maxOut] window', () => {
-    // scene cut at 0.3s is BEFORE minOut (0.0 + 0.5 = 0.5) — must be ignored.
+    // scene cut at 0.7s is BEFORE minOut (0.0 + 1.0 = 1.0) — must be ignored.
     // scene cut at 2.0s is AFTER maxOut (0.0 + 1.5 = 1.5) — must be ignored.
-    // No valid cut → fallback to minOut = 0.5.
-    const c = clip('c', [win(0), win(1), win(2)], { sceneCuts: [0.3, 2.0], duration: 3 });
+    // No valid cut → fallback to minOut = 1.0.
+    const c = clip('c', [win(0), win(1), win(2)], { sceneCuts: [0.7, 2.0], duration: 3 });
     const cand = { clipId: 'c', in: 0.0, out: 1.0, score: 0.8, meanAudioRMS: -30 };
     const refined = foodRule.refineSegment(c, cand, cfg);
-    expect(refined.out).toBeCloseTo(0.5); // fallback: minOut
+    expect(refined.out).toBeCloseTo(1.0); // fallback: minOut
   });
 
-  it('falls back to minOut (0.5s) when no scene cut exists — shortest snappiest cut', () => {
+  it('falls back to minOut (1.0s) when no scene cut exists — shortest snappiest cut', () => {
     const c = clip('c', [win(0), win(1)], { sceneCuts: [], duration: 2 });
     const cand = { clipId: 'c', in: 0.0, out: 1.0, score: 0.8, meanAudioRMS: -30 };
     const refined = foodRule.refineSegment(c, cand, cfg);
-    expect(refined.out).toBeCloseTo(0.5);
+    expect(refined.out).toBeCloseTo(1.0);
   });
 
   it('keeps the original candidate unchanged when clip is too short to refine', () => {
@@ -162,20 +162,20 @@ describe('buildReel (food_cooking end-to-end)', () => {
     }
   });
 
-  it('snaps to sub-second scene cuts, producing segments shorter than 1s', () => {
-    // Each clip has a scene cut at 0.8s — inside the 0.5–1.5s window.
-    // The fallback (no-cut) would give 0.5s; with the scene cut it should be 0.8s.
+  it('snaps to sub-second scene-cut precision, producing tight 1.0–1.5s segments', () => {
+    // Each clip has a scene cut at 1.3s — inside the 1.0–1.5s window.
+    // The fallback (no-cut) would give 1.0s; with the scene cut it should be 1.3s.
     const clips = Array.from({ length: 6 }, (_, i) => {
       return clip(
         `clip_${i + 1}`,
         Array.from({ length: 4 }, (_, j) => win(j, { blur: 0.05, exposure: 0.5 })),
-        { sceneCuts: [0.8], duration: 4 },
+        { sceneCuts: [1.3], duration: 4 },
       );
     });
     const edl = buildReel(clips, 'food_cooking', { lengthMin: 0, lengthMax: 60 });
 
-    const snapped = edl.timeline.filter((t) => Math.abs((t.out - t.in) - 0.8) < 0.05);
-    // At least some clips should snap to the 0.8s scene cut
+    const snapped = edl.timeline.filter((t) => Math.abs((t.out - t.in) - 1.3) < 0.05);
+    // At least some clips should snap to the 1.3s scene cut
     expect(snapped.length).toBeGreaterThan(0);
   });
 

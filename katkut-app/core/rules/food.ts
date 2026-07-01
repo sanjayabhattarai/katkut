@@ -61,10 +61,10 @@ export const foodRule: VibeRule = {
       ...FOOD_COOKING,
       minDuration: params.lengthMin,
       maxDuration: params.lengthMax,
-      // 0.5–1.5s per segment = the fast-cut food-reel feel.
+      // 1.0–1.5s per segment = the fast-cut food-reel feel without jitter (0.5s reads as a flicker).
       // bestSegment produces 1s units (one window); refineSegment then snaps the out-point to
-      // a nearby scene cut, trimming the segment down to as little as 0.5s.
-      minSegment: 0.5,
+      // a nearby scene cut, so a segment lands between 1.0s and 1.5s.
+      minSegment: 1.0,
       maxSegment: 1.5,
       // Crispness is king; exposure equally important (well-lit food); don't over-penalise
       // a steady held close-up shot (frozenPenalty reduced vs Auto); keep food sounds.

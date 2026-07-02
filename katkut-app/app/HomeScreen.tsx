@@ -11,19 +11,19 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { 
-  Sparkles, 
-  FolderOpen, 
-  Film, 
-  Plus, 
-  Clock, 
+import {
+  FolderOpen,
+  Film,
+  Plus,
+  Clock,
   Play,
   ChevronRight,
   Grid3X3,
+  Settings,
 } from 'lucide-react-native';
 import { colors, radius, space, type } from './theme';
 import PressableScale from './components/PressableScale';
-import { listDrafts, listExports, Project } from '../services';
+import { listDrafts, listExports, getCurrentUser, AuthUser, Project } from '../services';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - space.md * 2 - space.sm * 2) / 3;
@@ -35,6 +35,7 @@ export interface HomeScreenProps {
   onNewProject: () => void;
   onOpenDraft: (project: Project) => void;
   onOpenExport: (project: Project) => void;
+  onSettings: () => void;
   loading?: boolean;
 }
 
@@ -126,11 +127,12 @@ function ExportCard({ project, onPress }: ExportCardProps) {
   );
 }
 
-export default function HomeScreen({ onNewProject, onOpenDraft, onOpenExport, loading }: HomeScreenProps) {
+export default function HomeScreen({ onNewProject, onOpenDraft, onOpenExport, onSettings, loading }: HomeScreenProps) {
   const insets = useSafeAreaInsets();
   const [drafts, setDrafts] = useState<Project[]>([]);
   const [exports, setExports] = useState<Project[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   const loadProjects = useCallback(async () => {
     const [d, e] = await Promise.all([listDrafts(), listExports()]);
@@ -141,6 +143,12 @@ export default function HomeScreen({ onNewProject, onOpenDraft, onOpenExport, lo
   useEffect(() => {
     loadProjects();
   }, [loadProjects]);
+
+  // Re-checks each time Home mounts (e.g. returning from Settings after signing in/out), so the
+  // header avatar stays in sync without extra plumbing — screens here unmount rather than stay alive.
+  useEffect(() => {
+    getCurrentUser().then(setUser);
+  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -161,10 +169,13 @@ export default function HomeScreen({ onNewProject, onOpenDraft, onOpenExport, lo
         </View>
         
         <View style={styles.headerRight}>
-          <View style={styles.proBadge}>
-            <Sparkles size={12} color="#007AFF" />
-            <Text style={styles.proBadgeText}>AI</Text>
-          </View>
+          <PressableScale hitSlop={10} onPress={onSettings} style={styles.settingsButton}>
+            {user?.avatarUrl ? (
+              <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} />
+            ) : (
+              <Settings size={20} color="#FFFFFF" strokeWidth={2} />
+            )}
+          </PressableScale>
         </View>
       </View>
 
@@ -310,22 +321,20 @@ const styles = StyleSheet.create({
     height: 36,
   },
   headerRight: {},
-  proBadge: {
-    flexDirection: 'row',
+  settingsButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#1C1C1E',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 122, 255, 0.1)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    gap: 5,
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
-  proBadgeText: {
-    color: '#007AFF',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+  avatarImage: {
+    width: '100%',
+    height: '100%',
   },
-  
+
   // Scroll Content
   scrollContent: {
     paddingHorizontal: space.md,

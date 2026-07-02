@@ -4,6 +4,27 @@ import { supabase } from './supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
+export interface AuthUser {
+  id: string;
+  email: string | null;
+  name: string | null;
+  avatarUrl: string | null;
+}
+
+/** Current signed-in user, or null if signed out. Name/avatar come from the Google profile. */
+export async function getCurrentUser(): Promise<AuthUser | null> {
+  const { data } = await supabase.auth.getSession();
+  const user = data.session?.user;
+  if (!user) return null;
+  const meta = user.user_metadata ?? {};
+  return {
+    id: user.id,
+    email: user.email ?? null,
+    name: meta.full_name ?? meta.name ?? null,
+    avatarUrl: meta.avatar_url ?? meta.picture ?? null,
+  };
+}
+
 export async function signInWithGoogle() {
   const redirectTo = Linking.createURL('auth/callback');
 

@@ -7,6 +7,8 @@ import * as ImagePicker from 'expo-image-picker';
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import SplashScreen from './app/SplashScreen';
 import HomeScreen from './app/HomeScreen';
+import SettingsScreen from './app/SettingsScreen';
+import LoginScreen from './app/LoginScreen';
 import VibeSheet from './app/VibeSheet';
 import OptionsScreen, { LengthRange } from './app/OptionsScreen';
 import ProcessingScreen from './app/ProcessingScreen';
@@ -17,7 +19,7 @@ import { PickedClip } from './app/types';
 import { AnalysisClip, Edl } from './core';
 import { Project, newProjectId, saveDraft } from './services';
 
-type Screen = 'splash' | 'home' | 'vibe' | 'options' | 'processing' | 'result' | 'editor' | 'export';
+type Screen = 'splash' | 'home' | 'settings' | 'login' | 'vibe' | 'options' | 'processing' | 'result' | 'editor' | 'export';
 
 function clipIdForIndex(index: number): string {
   return `clip_${String(index + 1).padStart(2, '0')}`;
@@ -139,8 +141,17 @@ export default function App() {
           onNewProject={startNewProject}
           onOpenDraft={openDraft}
           onOpenExport={openDraft}
+          onSettings={() => setScreen('settings')}
           loading={pickingClips}
         />
+      )}
+
+      {screen === 'settings' && (
+        <SettingsScreen onBack={() => setScreen('home')} onGetPro={() => setScreen('login')} />
+      )}
+
+      {screen === 'login' && (
+        <LoginScreen onDone={() => setScreen('settings')} onSkip={() => setScreen('settings')} />
       )}
 
       {screen === 'vibe' && (

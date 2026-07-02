@@ -153,9 +153,11 @@ export default function HomeScreen({ onNewProject, onOpenDraft, onOpenExport, lo
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + space.sm }]}>
         <View style={styles.headerLeft}>
-          <Text style={styles.logo}>
-            Kat<Text style={styles.logoAccent}>Kut</Text>
-          </Text>
+          <Image
+            source={require('../assets/katkutai_icon.png')}
+            style={styles.logoMark}
+            resizeMode="contain"
+          />
         </View>
         
         <View style={styles.headerRight}>
@@ -303,14 +305,9 @@ const styles = StyleSheet.create({
     borderBottomColor: '#1C1C1E',
   },
   headerLeft: {},
-  logo: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: -0.5,
-  },
-  logoAccent: {
-    color: '#007AFF',
+  logoMark: {
+    width: 108,
+    height: 36,
   },
   headerRight: {},
   proBadge: {

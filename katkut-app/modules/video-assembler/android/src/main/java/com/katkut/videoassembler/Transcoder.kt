@@ -114,9 +114,12 @@ class Transcoder(private val context: Context) {
     val inUs = (seg.inSec * 1_000_000).toLong()
     val outUs = (seg.outSec * 1_000_000).toLong()
 
-    // source displayed aspect for cover crop
+    // HARD RULE 2: vertical sources fill (cover); landscape/square sources are shown uncropped,
+    // centered, over a blurred fill of the same footage — never a hard crop, never black bars.
     val srcAspect = displayedAspect(parsed)
-    renderer.setCoverCrop(srcAspect, outW.toDouble() / outH.toDouble())
+    val dstAspect = outW.toDouble() / outH.toDouble()
+    val blurredFill = srcAspect > dstAspect
+    if (blurredFill) renderer.setBlurredFill(srcAspect, dstAspect) else renderer.setCoverCrop(srcAspect, dstAspect)
 
     val extractor = MediaExtractor()
     var decoder: MediaCodec? = null
@@ -181,7 +184,7 @@ class Transcoder(private val context: Context) {
               if (firstPts < 0) firstPts = pts
               val outUsTimeline = timelineStartUs + (pts - firstPts)
               renderer.awaitNewImage()
-              renderer.drawFrame(outW, outH)
+              if (blurredFill) renderer.drawBlurredFillFrame(outW, outH) else renderer.drawFrame(outW, outH)
               renderer.setPresentationTime(outUsTimeline * 1000)
               renderer.swapBuffers()
               lastOutUs = outUsTimeline

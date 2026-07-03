@@ -33,6 +33,10 @@ class ProxyTranscoder(private val context: Context) {
   fun makeProxy(uri: String, outputPath: String) {
     val parsed = Uri.parse(uri)
     val srcAspect = displayedAspect(parsed)
+    // Same blurred-fill rule as export (HARD RULE 2) so preview matches the final render exactly —
+    // both paths run through the identical GlRenderer shader.
+    val dstAspect = OUT_W.toDouble() / OUT_H.toDouble()
+    val blurredFill = srcAspect > dstAspect
 
     val encoderFormat = MediaFormat.createVideoFormat(MIME, OUT_W, OUT_H).apply {
       setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
@@ -45,7 +49,7 @@ class ProxyTranscoder(private val context: Context) {
     val inputSurface = encoder.createInputSurface()
     val renderer = GlRenderer(inputSurface)
     renderer.setup()
-    renderer.setCoverCrop(srcAspect, OUT_W.toDouble() / OUT_H.toDouble())
+    if (blurredFill) renderer.setBlurredFill(srcAspect, dstAspect) else renderer.setCoverCrop(srcAspect, dstAspect)
     encoder.start()
 
     val muxer = MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
@@ -123,7 +127,7 @@ class ProxyTranscoder(private val context: Context) {
             if (firstPts < 0) firstPts = info.presentationTimeUs
             val outPts = info.presentationTimeUs - firstPts
             renderer.awaitNewImage()
-            renderer.drawFrame(OUT_W, OUT_H)
+            if (blurredFill) renderer.drawBlurredFillFrame(OUT_W, OUT_H) else renderer.drawFrame(OUT_W, OUT_H)
             renderer.setPresentationTime(outPts * 1000)
             renderer.swapBuffers()
             drainEncoder(encoder, muxState, encInfo, endOfStream = false)

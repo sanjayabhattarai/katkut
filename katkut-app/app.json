@@ -46,7 +46,8 @@
       ],
       "expo-video",
       "expo-font",
-      "expo-asset"
+      "expo-asset",
+      "./plugins/withReleaseSigning.js"
     ]
   }
 }

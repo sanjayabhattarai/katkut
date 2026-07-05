@@ -18,6 +18,11 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# Release signing — the keystore + its credentials must NEVER be committed.
+# Lives outside /android on purpose: /android is wiped by `expo prebuild --clean`,
+# but losing this keystore means losing the ability to ever update the Play Store listing.
+/keystore/
+
 # Metro
 .metro-health-check*
 

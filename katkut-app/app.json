@@ -8,7 +8,9 @@
     "icon": "./assets/katkutai_app_icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.katkut.app",
+      "buildNumber": "1"
     },
     "android": {
       "package": "com.katkut.app",

@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, Sparkles, LogOut, ChevronRight } from 'lucide-react-native';
+import * as WebBrowser from 'expo-web-browser';
+import { ChevronLeft, Sparkles, LogOut, ChevronRight, Check } from 'lucide-react-native';
 import PressableScale from './components/PressableScale';
 import { colors, radius, space, type } from './theme';
-import { getCurrentUser, signOut, AuthUser } from '../services';
+import { getCurrentUser, getEntitlement, signOut, AuthUser } from '../services';
+
+const MARKETING_UPGRADE_URL = 'https://katkut-dekc.vercel.app/upgrade';
 
 export interface SettingsScreenProps {
   onBack: () => void;
@@ -15,14 +18,20 @@ export interface SettingsScreenProps {
 export default function SettingsScreen({ onBack, onGetPro }: SettingsScreenProps) {
   const insets = useSafeAreaInsets();
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isPro, setIsPro] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
+  const [openingCheckout, setOpeningCheckout] = useState(false);
 
-  // Re-checks every time this screen mounts — including when returning from LoginScreen after
-  // a successful sign-in, since App.tsx unmounts/remounts screens rather than keeping them alive.
+  // Re-checks every time this screen mounts — including when returning from LoginScreen after a
+  // successful sign-in, or from the web checkout after a successful purchase, since App.tsx
+  // unmounts/remounts screens rather than keeping them alive.
   useEffect(() => {
-    getCurrentUser()
-      .then(setUser)
+    Promise.all([getCurrentUser(), getEntitlement()])
+      .then(([u, entitlement]) => {
+        setUser(u);
+        setIsPro(entitlement.isPro);
+      })
       .finally(() => setCheckingSession(false));
   }, []);
 
@@ -31,8 +40,23 @@ export default function SettingsScreen({ onBack, onGetPro }: SettingsScreenProps
     try {
       await signOut();
       setUser(null);
+      setIsPro(false);
     } finally {
       setSigningOut(false);
+    }
+  }
+
+  async function handleUpgrade() {
+    if (!user) return;
+    setOpeningCheckout(true);
+    try {
+      await WebBrowser.openBrowserAsync(`${MARKETING_UPGRADE_URL}?uid=${encodeURIComponent(user.id)}`);
+      // Re-check on return — the Stripe webhook may have already landed by the time the user
+      // switches back, but if not this just leaves isPro as-is until the next screen visit.
+      const entitlement = await getEntitlement();
+      setIsPro(entitlement.isPro);
+    } finally {
+      setOpeningCheckout(false);
     }
   }
 
@@ -49,6 +73,33 @@ export default function SettingsScreen({ onBack, onGetPro }: SettingsScreenProps
       <View style={styles.body}>
         {checkingSession ? (
           <ActivityIndicator size="small" color={colors.text.muted} />
+        ) : user && isPro ? (
+          <View style={styles.card}>
+            {user.avatarUrl ? (
+              <Image source={{ uri: user.avatarUrl }} style={styles.avatar} />
+            ) : (
+              <View style={styles.proIcon}>
+                <Sparkles size={22} color={colors.ai.default} strokeWidth={2} />
+              </View>
+            )}
+            <View style={styles.proBadge}>
+              <Check size={12} color="#FFFFFF" strokeWidth={3} />
+              <Text style={styles.proBadgeText}>Pro</Text>
+            </View>
+            <Text style={styles.cardTitle}>{user.name ?? "You're all set"}</Text>
+            <Text style={styles.cardSubtitle}>Thanks for being a Pro member — no watermark, unlimited reels.</Text>
+            {user.email && <Text style={styles.accountEmail}>{user.email}</Text>}
+            <PressableScale style={styles.signOutButton} onPress={handleSignOut} disabled={signingOut}>
+              {signingOut ? (
+                <ActivityIndicator size="small" color={colors.text.muted} />
+              ) : (
+                <>
+                  <LogOut size={16} color={colors.text.muted} strokeWidth={2} />
+                  <Text style={styles.signOutText}>Sign out</Text>
+                </>
+              )}
+            </PressableScale>
+          </View>
         ) : user ? (
           <View style={styles.card}>
             {user.avatarUrl ? (
@@ -59,11 +110,14 @@ export default function SettingsScreen({ onBack, onGetPro }: SettingsScreenProps
               </View>
             )}
             <Text style={styles.cardTitle}>{user.name ?? "You're all set"}</Text>
-            <Text style={styles.cardSubtitle}>
-              Pro is launching in our next version — for now, enjoy full free access. We'd love your
-              feedback!
-            </Text>
             {user.email && <Text style={styles.accountEmail}>{user.email}</Text>}
+            <PressableScale style={styles.upgradeButton} onPress={handleUpgrade} disabled={openingCheckout}>
+              {openingCheckout ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Text style={styles.upgradeButtonText}>Upgrade to Pro — €6.99/mo</Text>
+              )}
+            </PressableScale>
             <PressableScale style={styles.signOutButton} onPress={handleSignOut} disabled={signingOut}>
               {signingOut ? (
                 <ActivityIndicator size="small" color={colors.text.muted} />
@@ -82,8 +136,8 @@ export default function SettingsScreen({ onBack, onGetPro }: SettingsScreenProps
                 <Sparkles size={22} color={colors.ai.default} strokeWidth={2} />
               </View>
               <View style={styles.proRowText}>
-                <Text style={styles.cardTitle}>Get Pro — free during beta</Text>
-                <Text style={styles.cardSubtitleLeft}>Sign in with Google to unlock it</Text>
+                <Text style={styles.cardTitle}>Get Pro</Text>
+                <Text style={styles.cardSubtitleLeft}>Sign in to upgrade — €6.99/mo</Text>
               </View>
               <ChevronRight size={20} color={colors.text.muted} strokeWidth={2} />
             </View>
@@ -181,6 +235,35 @@ const styles = StyleSheet.create({
     ...type.bodySm,
     color: colors.text.muted,
     marginBottom: space.md,
+  },
+  proBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.ai.default,
+    borderRadius: radius.full,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    marginBottom: space.sm,
+  },
+  proBadgeText: {
+    ...type.bodySm,
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  upgradeButton: {
+    width: '100%',
+    backgroundColor: colors.ai.default,
+    borderRadius: radius.md,
+    paddingVertical: space.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: space.sm,
+  },
+  upgradeButtonText: {
+    ...type.bodySm,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   signOutButton: {
     flexDirection: 'row',

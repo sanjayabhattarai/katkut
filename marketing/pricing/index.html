@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pricing — Katkut AI</title>
+<meta name="description" content="Katkut AI Pro is €6.99/month — no watermark, unlimited reels. Free to start.">
+<link rel="stylesheet" href="/styles.css">
+<style>
+  .page-head { padding: 48px 0 8px; text-align: center; }
+  .page-head h1 { font-size: 34px; font-weight: 800; letter-spacing: -0.7px; margin: 0 0 10px; }
+  .page-head p { font-size: 16px; color: #6b6880; max-width: 480px; margin: 0 auto; }
+  @media (prefers-color-scheme: dark) { .page-head p { color: #a3a0b0; } }
+
+  .plans {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    max-width: 680px;
+    margin: 40px auto 8px;
+  }
+  .plan {
+    padding: 28px 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  .plan.pro {
+    border: 1.5px solid transparent;
+    background:
+      linear-gradient(#f6f5f8, #f6f5f8) padding-box,
+      linear-gradient(135deg, #9b51e0, #00c6ff) border-box;
+  }
+  @media (prefers-color-scheme: dark) {
+    .plan.pro {
+      background:
+        linear-gradient(#16151a, #16151a) padding-box,
+        linear-gradient(135deg, #9b51e0, #00c6ff) border-box;
+    }
+  }
+  .plan-name { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6880; margin-bottom: 6px; }
+  @media (prefers-color-scheme: dark) { .plan-name { color: #a3a0b0; } }
+  .plan-price { font-size: 34px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .plan-price span { font-size: 14px; font-weight: 500; color: #6b6880; }
+  @media (prefers-color-scheme: dark) { .plan-price span { color: #a3a0b0; } }
+  .plan-features { list-style: none; padding: 0; margin: 20px 0 24px; flex: 1; }
+  .plan-features li { font-size: 14.5px; padding: 6px 0; display: flex; gap: 8px; align-items: flex-start; }
+  .plan-features li::before { content: "✓"; color: #00a86b; font-weight: 700; flex-shrink: 0; }
+  .plan-features li.no::before { content: "–"; color: #a3a0b0; }
+
+  .app-note {
+    text-align: center;
+    max-width: 460px;
+    margin: 40px auto 0;
+    font-size: 14px;
+    color: #6b6880;
+  }
+  @media (prefers-color-scheme: dark) { .app-note { color: #a3a0b0; } }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="nav">
+      <a class="nav-brand" href="/">
+        <img src="/assets/logo.png" alt="Katkut AI" class="brand-mark">
+        Katkut AI
+      </a>
+      <div class="nav-links">
+        <a href="/about">About</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/privacy-policy">Privacy</a>
+      </div>
+    </nav>
+
+    <section class="page-head">
+      <h1>Simple, honest pricing</h1>
+      <p>Start free. Upgrade whenever the watermark starts to bug you.</p>
+    </section>
+
+    <div class="plans">
+      <div class="plan card">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">€0</div>
+        <ul class="plan-features">
+          <li>AI-picked rough cuts</li>
+          <li>All vibe presets</li>
+          <li class="no">Watermark on exports</li>
+          <li class="no">Capped export length</li>
+        </ul>
+        <span class="btn-secondary" style="opacity:0.6; pointer-events:none;">Included in the app</span>
+      </div>
+
+      <div class="plan pro card">
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">€6.99<span>/month</span></div>
+        <ul class="plan-features">
+          <li>Everything in Free</li>
+          <li>No watermark</li>
+          <li>Unlimited reels</li>
+          <li>Priority support</li>
+        </ul>
+        <a id="subscribe-btn" class="btn" href="/upgrade">Subscribe</a>
+      </div>
+    </div>
+
+    <p id="app-note" class="app-note" style="display:none;">
+      Subscriptions are managed from inside the Katkut AI app, so your Pro status is tied to your
+      account. Open <strong>Settings → Get Pro</strong> in the app to subscribe.
+    </p>
+
+    <footer class="site-footer">
+      <div>© 2026 Katkut AI. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="/about">About</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/privacy-policy">Privacy Policy</a>
+        <a href="/terms">Terms of Service</a>
+      </div>
+    </footer>
+  </div>
+  <script>
+    // Reached from inside the app (Settings → Get Pro links here with ?uid=...): send straight
+    // to the real checkout redirect. Reached organically from a browser (no uid): checkout needs
+    // to be tied to a signed-in account, so point people at the app instead.
+    var uid = new URLSearchParams(window.location.search).get('uid');
+    var btn = document.getElementById('subscribe-btn');
+    if (uid) {
+      btn.href = '/upgrade?uid=' + encodeURIComponent(uid);
+    } else {
+      btn.style.display = 'none';
+      document.getElementById('app-note').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

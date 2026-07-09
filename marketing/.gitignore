@@ -1,0 +1,11 @@
+# dependencies
+node_modules/
+
+# Vercel CLI project link + local dev artifacts
+.vercel/
+
+# local env files
+.env*.local
+
+.vercel
+.env*

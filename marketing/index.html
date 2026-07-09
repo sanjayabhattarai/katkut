@@ -3,42 +3,136 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Katkut AI</title>
+<title>Katkut AI — Turn your clips into a reel in seconds</title>
+<meta name="description" content="Drop in your clips, Katkut AI picks the best moments and cuts a ready-to-post 9:16 reel — entirely on your phone, nothing uploaded.">
+<link rel="stylesheet" href="/styles.css">
 <style>
-  :root { color-scheme: light dark; }
-  body {
-    margin: 0;
-    min-height: 100vh;
+  .hero {
+    padding: 56px 0 64px;
+    text-align: center;
+  }
+  .hero .brand-mark { width: 64px; height: 64px; border-radius: 18px; margin: 0 auto 24px; }
+  .hero h1 {
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin: 0 0 16px;
+    line-height: 1.1;
+  }
+  .hero p.sub {
+    font-size: 18px;
+    color: #6b6880;
+    max-width: 520px;
+    margin: 0 auto 32px;
+  }
+  @media (prefers-color-scheme: dark) { .hero p.sub { color: #a3a0b0; } }
+  .hero-ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin: 24px 0 8px;
+  }
+  .feature { padding: 24px; }
+  .feature .icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(155,81,224,0.18), rgba(0,198,255,0.18));
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #ffffff;
-    color: #1a1a1a;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 18px;
+    margin-bottom: 14px;
   }
-  @media (prefers-color-scheme: dark) {
-    body { background: #0f0e13; color: #f0eef8; }
-    a { color: #8fb8ff; }
+  .feature h3 { font-size: 16px; font-weight: 700; margin: 0 0 6px; letter-spacing: -0.2px; }
+  .feature p { font-size: 14.5px; color: #6b6880; margin: 0; }
+  @media (prefers-color-scheme: dark) { .feature p { color: #a3a0b0; } }
+
+  .section-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin: 0 0 8px; text-align: center; }
+  .section-sub { text-align: center; color: #6b6880; margin: 0 0 32px; }
+  @media (prefers-color-scheme: dark) { .section-sub { color: #a3a0b0; } }
+
+  .mid-cta {
+    text-align: center;
+    padding: 56px 24px;
+    margin: 64px 0 0;
+    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(155,81,224,0.10), rgba(0,198,255,0.08));
   }
-  .wrap { text-align: center; padding: 24px; }
-  .brand-mark {
-    width: 56px;
-    height: 56px;
-    border-radius: 14px;
-    background: linear-gradient(135deg, #8b2fc9, #2fc9d6);
-    margin: 0 auto 20px;
-  }
-  h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin: 0 0 8px; }
-  p { color: #6b6880; margin: 0 0 24px; }
-  a.link { font-size: 15px; font-weight: 600; text-decoration: none; }
+  .mid-cta h2 { font-size: 26px; font-weight: 800; margin: 0 0 10px; letter-spacing: -0.5px; }
+  .mid-cta p { color: #6b6880; margin: 0 0 24px; }
+  @media (prefers-color-scheme: dark) { .mid-cta p { color: #a3a0b0; } }
 </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="brand-mark"></div>
-    <h1>Katkut AI</h1>
-    <p>Turn your clips into a reel in seconds.</p>
-    <a class="link" href="/privacy-policy">Privacy Policy →</a>
+    <nav class="nav">
+      <a class="nav-brand" href="/">
+        <img src="/assets/logo.png" alt="Katkut AI" class="brand-mark">
+        Katkut AI
+      </a>
+      <div class="nav-links">
+        <a href="/about">About</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/privacy-policy">Privacy</a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div class="brand-mark"></div>
+      <h1>Turn your clips into a reel<br>in seconds.</h1>
+      <p class="sub">Drop in the short clips you shot today. Katkut AI picks the best moments, trims,
+      sequences, and hands you a ready-to-post 9:16 reel — right on your phone.</p>
+      <div class="hero-ctas">
+        <a class="btn" href="/pricing">See Pro pricing</a>
+        <a class="btn-secondary" href="/about">How it works</a>
+      </div>
+    </section>
+
+    <section class="features">
+      <div class="feature card">
+        <div class="icon">🔒</div>
+        <h3>100% on-device</h3>
+        <p>Your clips are never uploaded anywhere. Every cut, trim, and export happens right on your
+        phone.</p>
+      </div>
+      <div class="feature card">
+        <div class="icon">✨</div>
+        <h3>AI picks the moments</h3>
+        <p>Skips the blurry, dark, and shaky bits automatically — keeps what's actually worth
+        watching.</p>
+      </div>
+      <div class="feature card">
+        <div class="icon">🎬</div>
+        <h3>Ready for TikTok & Reels</h3>
+        <p>Always exports a clean 9:16 vertical video, ready to finish in CapCut or post straight to
+        socials.</p>
+      </div>
+      <div class="feature card">
+        <div class="icon">⚡</div>
+        <h3>Seconds, not hours</h3>
+        <p>Skip the timeline scrubbing. Go from 40 raw clips to a postable rough cut before your
+        coffee's cold.</p>
+      </div>
+    </section>
+
+    <section class="mid-cta">
+      <h2>Ready to cut your first reel?</h2>
+      <p>Free to start. Upgrade to Pro anytime for unlimited exports and no watermark.</p>
+      <a class="btn" href="/pricing">See Pro pricing →</a>
+    </section>
+
+    <footer class="site-footer">
+      <div>© 2026 Katkut AI. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="/about">About</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/privacy-policy">Privacy Policy</a>
+        <a href="/terms">Terms of Service</a>
+      </div>
+    </footer>
   </div>
 </body>
 </html>

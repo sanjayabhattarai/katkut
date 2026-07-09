@@ -1,0 +1,11 @@
+{
+  "name": "katkut-marketing",
+  "private": true,
+  "dependencies": {
+    "stripe": "^22.3.0",
+    "@supabase/supabase-js": "^2.110.1"
+  },
+  "devDependencies": {
+    "vercel": "^54.21.1"
+  }
+}

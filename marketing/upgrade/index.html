@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Katkut AI Pro</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    color: #1a1a1a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #0f0e13; color: #f0eef8; }
+    .card { background: #17151f; border-color: #2a2735; }
+    .feature { color: #cac7d6; }
+    .warning { background: #3a1f1f; color: #ffb4b4; }
+  }
+  .wrap { text-align: center; padding: 24px; width: 100%; max-width: 380px; }
+  .brand-mark {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    object-fit: cover;
+    display: block;
+    margin: 0 auto 20px;
+  }
+  h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin: 0 0 4px; }
+  .price { font-size: 40px; font-weight: 800; margin: 12px 0 20px; }
+  .price span { font-size: 15px; font-weight: 500; color: #8f8ba0; }
+  .card {
+    background: #f7f6fa;
+    border: 1px solid #e8e6f0;
+    border-radius: 16px;
+    padding: 24px;
+    text-align: left;
+  }
+  .feature {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #4a4760;
+    margin-bottom: 12px;
+  }
+  .feature:last-of-type { margin-bottom: 0; }
+  .btn {
+    display: block;
+    margin-top: 24px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #9b51e0, #00c6ff);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 16px;
+    text-decoration: none;
+    text-align: center;
+  }
+  .warning {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    background: #fdeceb;
+    color: #b3261e;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <img src="/assets/logo.png" alt="Katkut AI" class="brand-mark">
+    <h1>Katkut AI Pro</h1>
+    <p class="price">&euro;6.99<span>/month</span></p>
+    <div class="card">
+      <div class="feature">No watermark on exports</div>
+      <div class="feature">Unlimited reels</div>
+      <div class="feature">Priority support</div>
+    </div>
+    <a id="subscribe-btn" class="btn" href="#">Subscribe with card</a>
+    <p id="no-uid-warning" class="warning" style="display:none;">
+      Open this page from inside the Katkut AI app so we can link your subscription to your account.
+    </p>
+  </div>
+  <script>
+    // TODO: replace with the real Stripe Payment Link once it's created (Stripe Dashboard >
+    // Payment Links > new link for the €6.99/month "Katkut AI Pro" price).
+    var STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/test_7sY28qh13bk88MJctt5sA00';
+
+    var uid = new URLSearchParams(window.location.search).get('uid');
+    var btn = document.getElementById('subscribe-btn');
+    if (uid) {
+      // client_reference_id round-trips through Stripe Checkout onto the resulting session, which
+      // the webhook (marketing/api/stripe-webhook.js) reads to know which Supabase user paid.
+      btn.href = STRIPE_PAYMENT_LINK + '?client_reference_id=' + encodeURIComponent(uid);
+    } else {
+      btn.style.display = 'none';
+      document.getElementById('no-uid-warning').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

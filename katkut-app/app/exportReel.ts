@@ -9,11 +9,14 @@ export interface ExportResult {
 }
 
 /** Assemble the EDL into an MP4 in the cache dir, then probe it to confirm validity.
- * resolution defaults to full-quality 1080x1920; '720p' is the fast-export option. */
+ * resolution defaults to full-quality 1080x1920; '720p' is the fast-export option.
+ * isPro (HARD RULE 6): free exports carry the watermark, Pro removes it — caller passes account
+ * entitlement (services/entitlement.ts), this just decides applyWatermark = !isPro. */
 export async function exportReel(
   edl: Edl,
   analyses: AnalysisClip[],
   resolution: ExportResolution = '1080p',
+  isPro: boolean = false,
 ): Promise<ExportResult> {
   const uriByClipId = new Map<string, string>();
   for (const a of analyses) {
@@ -41,8 +44,8 @@ export async function exportReel(
   const outFile = new File(Paths.cache, `katkut_${Date.now()}.mp4`);
   // Audio is per-clip now (no global toggle): 'smart' tells native to honor each clip's muted flag.
   // The watermark (HARD RULE 6) is a fixed brand asset baked into the native module as an Android
-  // resource — see Transcoder.kt — not passed from JS, so no watermarkUri argument here.
-  const { outputPath } = await VideoAssembler.assemble(segments, outFile.uri, 'smart', resolution);
+  // resource — see Transcoder.kt — only whether to apply it crosses the bridge, not the asset itself.
+  const { outputPath } = await VideoAssembler.assemble(segments, outFile.uri, 'smart', resolution, !isPro);
   const probed = await MediaProbe.probe(outputPath);
   return { outputPath, probed };
 }

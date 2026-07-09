@@ -17,14 +17,15 @@ export type PhotoMotionType = 'zoomIn' | 'zoomOut' | 'panLR' | 'panRL' | '';
 declare class VideoAssemblerModule extends NativeModule<{}> {
   /**
    * Trim+concat segments → one 1080x1920 MP4 at outputPath (local filesystem path). The free-tier
-   * watermark (HARD RULE 6) is composited automatically from a bundled native asset — nothing to
-   * pass from JS for it.
+   * watermark (HARD RULE 6) is a bundled native asset — applyWatermark just toggles whether it's
+   * composited; the caller decides from account entitlement (see exportReel.ts).
    */
   assemble(
     segments: AssembleSegment[],
     outputPath: string,
     audioMode: AssembleAudioMode,
     resolution: ExportResolution,
+    applyWatermark: boolean,
   ): Promise<{ outputPath: string }>;
 
   /**

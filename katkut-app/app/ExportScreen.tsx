@@ -15,7 +15,7 @@ import { exportReel } from './exportReel';
 import { saveToGallery, shareReel } from './share';
 import { AnalysisClip, Edl } from '../core';
 import { ExportResolution } from '../native';
-import { saveDraft, markExported } from '../services';
+import { saveDraft, markExported, getEntitlement } from '../services';
 import { space } from './theme';
 import PressableScale from './components/PressableScale';
 
@@ -77,7 +77,10 @@ export default function ExportScreen({ analyses, edl, vibeId, projectId, onDone,
 
     try {
       setPhase({ kind: 'running', label: 'Rendering video...' });
-      const { outputPath } = await exportReel(edl, analyses, resolution);
+      // Checked fresh at export time (not cached from screen mount) so a subscription bought
+      // moments ago in the browser and returned from is reflected immediately.
+      const { isPro } = await getEntitlement();
+      const { outputPath } = await exportReel(edl, analyses, resolution, isPro);
 
       setPhase({ kind: 'running', label: 'Saving to gallery...' });
       await saveToGallery(outputPath);

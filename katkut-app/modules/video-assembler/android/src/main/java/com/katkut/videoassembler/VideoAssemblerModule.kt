@@ -22,14 +22,15 @@ class VideoAssemblerModule : Module() {
 
     // Trim+concat segments → one 1080x1920 MP4 at outputPath (a local filesystem path).
     // audioMode: "smart" (per-clip muted flags) | "on" (all audio) | "off" (silent).
-    // The free-tier watermark (HARD RULE 6) is composited automatically — see Transcoder.assemble.
-    AsyncFunction("assemble") { segments: List<SegmentRecord>, outputPath: String, audioMode: String, resolution: String ->
+    // applyWatermark (HARD RULE 6): free exports carry it, Pro removes it — decided by the caller
+    // from account entitlement (see exportReel.ts), this module just executes it.
+    AsyncFunction("assemble") { segments: List<SegmentRecord>, outputPath: String, audioMode: String, resolution: String, applyWatermark: Boolean ->
       val context = appContext.reactContext
         ?: throw VideoAssemblerException("No React context available")
       val path = outputPath.removePrefix("file://")
       val segs = segments.map { Segment(it.uri, it.inSec, it.outSec, it.muted) }
       try {
-        Transcoder(context).assemble(segs, path, audioMode, resolution)
+        Transcoder(context).assemble(segs, path, audioMode, resolution, applyWatermark)
       } catch (e: Exception) {
         throw VideoAssemblerException("Assemble failed: ${e.message}", e)
       }

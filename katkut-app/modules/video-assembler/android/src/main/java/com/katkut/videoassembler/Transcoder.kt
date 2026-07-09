@@ -37,6 +37,7 @@ class Transcoder(private val context: Context) {
     outputPath: String,
     audioMode: String,
     resolution: String,
+    applyWatermark: Boolean = true,
   ) {
     if (segments.isEmpty()) throw IllegalArgumentException("No segments to assemble")
 
@@ -61,30 +62,33 @@ class Transcoder(private val context: Context) {
     val inputSurface = encoder.createInputSurface()
     val renderer = GlRenderer(inputSurface)
     renderer.setup()
-    // HARD RULE 6 (freemium): watermark every free export. Loaded as a NATIVE resource bundled
-    // with this module (res/drawable-nodpi/watermark.png), not from JS — the watermark is a fixed
-    // brand asset, not user content, and `expo-asset`'s Asset.fromModule() proved unreliable for
-    // this: for a bundled Android image it can synchronously set `localUri` to a bare, schemeless
-    // resource-name string (a shortcut meant for RN's <Image>, which resolves it internally) —
-    // that string was never a real openable file/content URI, so ContentResolver.openInputStream()
-    // on it silently failed, and the previous blanket try/catch swallowed the failure with no
-    // logging. A bundled resource has none of that ambiguity: BitmapFactory.decodeResource always
-    // works or the module fails to build.
-    try {
-      val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.watermark)
-      if (bitmap == null) {
-        Log.w(TAG, "Watermark: decodeResource(R.drawable.watermark) returned null — skipping watermark for this export.")
-      } else {
-        try {
-          renderer.setWatermark(bitmap, outW, outH)
-        } finally {
-          bitmap.recycle()
+    // HARD RULE 6 (freemium): watermark free exports, Pro removes it. applyWatermark is decided
+    // by the caller from account entitlement (see exportReel.ts) — this module only executes that
+    // decision. Loaded as a NATIVE resource bundled with this module (res/drawable-nodpi/watermark.png),
+    // not from JS — the watermark is a fixed brand asset, not user content, and `expo-asset`'s
+    // Asset.fromModule() proved unreliable for this: for a bundled Android image it can synchronously
+    // set `localUri` to a bare, schemeless resource-name string (a shortcut meant for RN's <Image>,
+    // which resolves it internally) — that string was never a real openable file/content URI, so
+    // ContentResolver.openInputStream() on it silently failed, and the previous blanket try/catch
+    // swallowed the failure with no logging. A bundled resource has none of that ambiguity:
+    // BitmapFactory.decodeResource always works or the module fails to build.
+    if (applyWatermark) {
+      try {
+        val bitmap = BitmapFactory.decodeResource(context.resources, R.drawable.watermark)
+        if (bitmap == null) {
+          Log.w(TAG, "Watermark: decodeResource(R.drawable.watermark) returned null — skipping watermark for this export.")
+        } else {
+          try {
+            renderer.setWatermark(bitmap, outW, outH)
+          } finally {
+            bitmap.recycle()
+          }
         }
+      } catch (e: Exception) {
+        // Best-effort: never fail the whole export over the watermark, but ALWAYS log why —
+        // silent failure here is exactly what made the original bug invisible.
+        Log.w(TAG, "Watermark setup failed, exporting without one: ${e.message}", e)
       }
-    } catch (e: Exception) {
-      // Best-effort: never fail the whole export over the watermark, but ALWAYS log why —
-      // silent failure here is exactly what made the original bug invisible.
-      Log.w(TAG, "Watermark setup failed, exporting without one: ${e.message}", e)
     }
     encoder.start()
 

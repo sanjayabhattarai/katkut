@@ -76,7 +76,7 @@
   <div class="wrap">
     <img src="/assets/logo.png" alt="Katkut AI" class="brand-mark">
     <h1>Katkut AI Pro</h1>
-    <p class="price">&euro;6.99<span>/month</span></p>
+    <p class="price">$3.99<span>/month</span></p>
     <div class="card">
       <div class="feature">No watermark on exports</div>
       <div class="feature">Unlimited reels</div>
@@ -88,8 +88,10 @@
     </p>
   </div>
   <script>
-    // TODO: replace with the real Stripe Payment Link once it's created (Stripe Dashboard >
-    // Payment Links > new link for the €6.99/month "Katkut AI Pro" price).
+    // TODO: this still points at the OLD €6.99/month Stripe Price's test-mode Payment Link.
+    // The displayed price above is now $3.99, but this link is NOT updated to match — create a
+    // new $3.99 USD Price + Payment Link in the Stripe Dashboard (Payment Links > New) and swap
+    // this constant before going live, or checkout will charge the old EUR amount.
     var STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/test_7sY28qh13bk88MJctt5sA00';
 
     var uid = new URLSearchParams(window.location.search).get('uid');

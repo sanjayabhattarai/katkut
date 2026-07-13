@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pricing — Katkut AI</title>
-<meta name="description" content="Katkut AI Pro is €6.99/month — no watermark, unlimited reels. Free to start.">
+<meta name="description" content="Katkut AI Pro is $3.99/month — no watermark, unlimited reels. Free to start.">
 <link rel="stylesheet" href="/styles.css">
 <style>
   .page-head { padding: 48px 0 8px; text-align: center; }
@@ -15,12 +15,14 @@
   .plans {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 20px;
-    max-width: 680px;
-    margin: 40px auto 8px;
+    gap: 22px;
+    max-width: 700px;
+    margin: 44px auto 8px;
+    align-items: start;
   }
   .plan {
-    padding: 28px 24px;
+    position: relative;
+    padding: 30px 26px;
     display: flex;
     flex-direction: column;
   }
@@ -29,28 +31,94 @@
     background:
       linear-gradient(#f6f5f8, #f6f5f8) padding-box,
       linear-gradient(135deg, #9b51e0, #00c6ff) border-box;
+    box-shadow: 0 24px 60px rgba(155,81,224,0.18);
   }
+  @media (min-width: 640px) { .plan.pro { transform: translateY(-6px); } }
   @media (prefers-color-scheme: dark) {
     .plan.pro {
       background:
         linear-gradient(#16151a, #16151a) padding-box,
         linear-gradient(135deg, #9b51e0, #00c6ff) border-box;
+      box-shadow: 0 24px 60px rgba(155,81,224,0.28);
     }
   }
-  .plan-name { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6880; margin-bottom: 6px; }
+  .plan-badge {
+    position: absolute;
+    top: -13px;
+    right: 24px;
+    background: linear-gradient(135deg, #9b51e0, #00c6ff);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    padding: 6px 13px;
+    border-radius: 999px;
+    box-shadow: 0 6px 16px rgba(155,81,224,0.4);
+  }
+  .plan-name { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #6b6880; margin-bottom: 8px; }
   @media (prefers-color-scheme: dark) { .plan-name { color: #a3a0b0; } }
-  .plan-price { font-size: 34px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .plan-price { font-size: 38px; font-weight: 800; letter-spacing: -0.6px; margin-bottom: 4px; }
   .plan-price span { font-size: 14px; font-weight: 500; color: #6b6880; }
   @media (prefers-color-scheme: dark) { .plan-price span { color: #a3a0b0; } }
-  .plan-features { list-style: none; padding: 0; margin: 20px 0 24px; flex: 1; }
-  .plan-features li { font-size: 14.5px; padding: 6px 0; display: flex; gap: 8px; align-items: flex-start; }
-  .plan-features li::before { content: "✓"; color: #00a86b; font-weight: 700; flex-shrink: 0; }
-  .plan-features li.no::before { content: "–"; color: #a3a0b0; }
+  .plan-desc { font-size: 13.5px; color: #6b6880; margin: 0 0 4px; }
+  @media (prefers-color-scheme: dark) { .plan-desc { color: #a3a0b0; } }
+
+  .plan-features { list-style: none; padding: 0; margin: 22px 0 26px; flex: 1; }
+  .plan-features li {
+    font-size: 14.5px;
+    padding: 7px 0;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .plan-features li::before {
+    content: "✓";
+    flex-shrink: 0;
+    margin-top: 1px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(0,168,107,0.15);
+    color: #00a86b;
+    font-weight: 800;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .plan-features li.no::before {
+    content: "–";
+    background: rgba(107,104,128,0.12);
+    color: #9490a0;
+  }
+
+  .plan-cta {
+    text-align: center;
+  }
+
+  .pricing-trust {
+    text-align: center;
+    max-width: 460px;
+    margin: 28px auto 0;
+    font-size: 13px;
+    color: #6b6880;
+  }
+  @media (prefers-color-scheme: dark) { .pricing-trust { color: #a3a0b0; } }
+
+  .faq-teaser {
+    text-align: center;
+    max-width: 460px;
+    margin: 48px auto 0;
+    font-size: 14px;
+    color: #6b6880;
+  }
+  @media (prefers-color-scheme: dark) { .faq-teaser { color: #a3a0b0; } }
 
   .app-note {
     text-align: center;
     max-width: 460px;
-    margin: 40px auto 0;
+    margin: 28px auto 0;
     font-size: 14px;
     color: #6b6880;
   }
@@ -74,39 +142,47 @@
 
     <section class="page-head">
       <h1>Simple, honest pricing</h1>
-      <p>Start free. Upgrade whenever the watermark starts to bug you.</p>
+      <p>One plan. No tiers to compare, no hidden fees. Upgrade whenever the watermark starts to
+      bug you.</p>
     </section>
 
     <div class="plans">
       <div class="plan card">
         <div class="plan-name">Free</div>
-        <div class="plan-price">€0</div>
+        <div class="plan-price">$0</div>
+        <p class="plan-desc">Everything you need to try it out.</p>
         <ul class="plan-features">
           <li>AI-picked rough cuts</li>
           <li>All vibe presets</li>
           <li class="no">Watermark on exports</li>
           <li class="no">Capped export length</li>
         </ul>
-        <span class="btn-secondary" style="opacity:0.6; pointer-events:none;">Included in the app</span>
+        <span class="btn-secondary plan-cta" style="opacity:0.6; pointer-events:none;">Included in the app</span>
       </div>
 
       <div class="plan pro card">
+        <div class="plan-badge">Recommended</div>
         <div class="plan-name">Pro</div>
-        <div class="plan-price">€6.99<span>/month</span></div>
+        <div class="plan-price">$3.99<span>/month</span></div>
+        <p class="plan-desc">For reels you actually want to post.</p>
         <ul class="plan-features">
           <li>Everything in Free</li>
           <li>No watermark</li>
           <li>Unlimited reels</li>
           <li>Priority support</li>
         </ul>
-        <a id="subscribe-btn" class="btn" href="/upgrade">Subscribe</a>
+        <a id="subscribe-btn" class="btn plan-cta" href="/upgrade">Subscribe</a>
       </div>
     </div>
+
+    <p class="pricing-trust">🔒 Secure checkout via Stripe &nbsp;·&nbsp; Cancel anytime &nbsp;·&nbsp; No hidden fees</p>
 
     <p id="app-note" class="app-note" style="display:none;">
       Subscriptions are managed from inside the Katkut AI app, so your Pro status is tied to your
       account. Open <strong>Settings → Get Pro</strong> in the app to subscribe.
     </p>
+
+    <p class="faq-teaser">Have questions about billing or how Pro works? See our <a href="/about#faq">FAQ →</a></p>
 
     <footer class="site-footer">
       <div>© 2026 Katkut AI. All rights reserved.</div>

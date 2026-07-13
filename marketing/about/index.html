@@ -59,15 +59,35 @@
   .steps li span { color: #6b6880; }
   @media (prefers-color-scheme: dark) { .steps li span { color: #a3a0b0; } }
 
-  /* ---- Availability note ---- */
-  .note {
-    padding: 16px 18px;
-    font-size: 14px;
-    color: #6b6880;
-    margin: 24px 0;
+  /* ---- Availability banner ---- */
+  .availability {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 28px 0;
+    padding: 20px 22px;
+    border: 1px solid rgba(155,81,224,0.25);
+    background: linear-gradient(135deg, rgba(155,81,224,0.08), rgba(0,198,255,0.06));
   }
-  @media (prefers-color-scheme: dark) { .note { color: #a3a0b0; } }
-  .note strong { color: inherit; }
+  .availability-text { font-size: 14.5px; color: #4a4760; }
+  @media (prefers-color-scheme: dark) { .availability-text { color: #cac7d6; } }
+  .store-links { display: flex; gap: 10px; flex-wrap: wrap; }
+  .store-link {
+    font-size: 13px;
+    font-weight: 700;
+    padding: 9px 14px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(0,0,0,0.08);
+    color: #1a1a1a !important;
+    white-space: nowrap;
+  }
+  @media (prefers-color-scheme: dark) {
+    .store-link { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.12); color: #f0eef8 !important; }
+  }
+  .store-link:hover { text-decoration: none; opacity: 0.85; }
 
   /* ---- FAQ accordion (plain <details>, no JS — fully crawlable) ---- */
   .faq-list { margin: 20px 0; }
@@ -180,11 +200,15 @@
         </div>
       </div>
 
-      <p class="note card">
-        <strong>Availability:</strong> Katkut AI is currently in testing — Android via Play Store
-        closed testing, iPhone via TestFlight. Public launch is coming soon; email us below if you'd
-        like early access.
-      </p>
+      <div class="availability card">
+        <div class="availability-text">
+          <strong>Katkut AI is live now</strong> — free to download on the App Store and Google Play.
+        </div>
+        <div class="store-links">
+          <a class="store-link" href="https://apps.apple.com/app/id6790313795">Download on the App Store</a>
+          <a class="store-link" href="https://play.google.com/store/apps/details?id=com.katkut.app">Get it on Google Play</a>
+        </div>
+      </div>
 
       <h2 id="faq">Frequently asked questions</h2>
       <div class="faq-list">
@@ -235,13 +259,13 @@
         <details class="faq-item card">
           <summary>Is Katkut AI free to use?</summary>
           <p>Yes — the free tier includes AI-picked rough cuts and every style preset, with a watermark
-          on exports. Katkut AI Pro (€6.99/month) removes the watermark and unlocks unlimited reels.
+          on exports. Katkut AI Pro ($3.99/month) removes the watermark and unlocks unlimited reels.
           See <a href="/pricing">Pricing</a> for details.</p>
         </details>
         <details class="faq-item card">
           <summary>What phones does Katkut AI support?</summary>
-          <p>Katkut AI is currently in testing on both Android (Play Store closed testing) and iPhone
-          (TestFlight), with public launch coming soon. Email us if you'd like early access.</p>
+          <p>Katkut AI is available now on both Android (Google Play) and iPhone (App Store) — free
+          to download.</p>
         </details>
         <details class="faq-item card">
           <summary>How do I cancel my Pro subscription?</summary>
@@ -253,7 +277,7 @@
 
       <h2>Get in touch</h2>
       <p>Questions, feedback, or just want to say hi? Email us at
-      <a href="mailto:sanjaybhattarai362@gmail.com">sanjaybhattarai362@gmail.com</a>.</p>
+      <a href="mailto:khelset.com@gmail.com">khelset.com@gmail.com</a>.</p>
     </div>
 
     <footer class="site-footer">
@@ -333,7 +357,7 @@
         "name": "Is Katkut AI free to use?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes — the free tier includes AI-picked rough cuts and every style preset, with a watermark on exports. Katkut AI Pro (EUR 6.99/month) removes the watermark and unlocks unlimited reels."
+          "text": "Yes — the free tier includes AI-picked rough cuts and every style preset, with a watermark on exports. Katkut AI Pro (USD 3.99/month) removes the watermark and unlocks unlimited reels."
         }
       },
       {
@@ -341,7 +365,7 @@
         "name": "What phones does Katkut AI support?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Katkut AI is currently in testing on both Android (Play Store closed testing) and iPhone (TestFlight), with public launch coming soon."
+          "text": "Katkut AI is available now on both Android (Google Play) and iPhone (App Store) — free to download."
         }
       },
       {

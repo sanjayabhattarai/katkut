@@ -35,9 +35,6 @@ import {
 
 const MARKETING_SITE_URL = 'https://katkut-dekc.vercel.app';
 const MARKETING_UPGRADE_URL = `${MARKETING_SITE_URL}/upgrade`;
-// NOTE: marketing/terms/index.html and marketing/privacy-policy/index.html still list a
-// different contact address (sanjaybhattarai362@gmail.com) — update those too if this one should
-// be the single source of truth.
 const CONTACT_EMAIL = 'khelset.com@gmail.com';
 // Stripe's hosted Customer Portal — lets a Pro member view/cancel their own subscription.
 // Stripe handles identity verification (emailed one-time link) itself; we never touch billing

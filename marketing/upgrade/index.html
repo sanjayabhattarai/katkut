@@ -82,11 +82,10 @@
     </p>
   </div>
   <script>
-    // TODO: this still points at the OLD €6.99/month Stripe Price's test-mode Payment Link.
-    // The displayed price above is now $3.99, but this link is NOT updated to match — create a
-    // new $3.99 USD Price + Payment Link in the Stripe Dashboard (Payment Links > New) and swap
-    // this constant before going live, or checkout will charge the old EUR amount.
-    var STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/test_7sY28qh13bk88MJctt5sA00';
+    // Test-mode Payment Link for the $3.99/month "Katkut AI Pro" price. Swap for the live-mode
+    // equivalent (Stripe Dashboard > Test mode OFF > Payment Links > New) as part of the sandbox
+    // → live cutover — see doc/STRIPE_GO_LIVE_CHECKLIST.md.
+    var STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/test_4gM3cu8ux5ZO8MJall5sA01';
 
     var uid = new URLSearchParams(window.location.search).get('uid');
     var btn = document.getElementById('subscribe-btn');

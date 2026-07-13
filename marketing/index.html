@@ -12,19 +12,16 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="/styles.css">
 <style>
-  /* The landing page is always dark to match the app + promo graphics
-     (other pages keep the auto light/dark scheme from styles.css). */
+  /* The whole site is always dark (styles.css sets the base) — the hero here additionally gets
+     a soft radial gradient and slightly more transparent cards to match the promo graphics. */
   body {
     background:
       radial-gradient(900px 480px at 15% -5%, rgba(155,81,224,0.22), transparent 70%),
       radial-gradient(800px 420px at 90% 10%, rgba(0,198,255,0.10), transparent 70%),
       #0c0914;
-    color: #f0eef8;
   }
   a { color: #b18cff; }
-  .card { background: rgba(255,255,255,0.035); border-color: rgba(255,255,255,0.08); }
-  .btn-secondary { border-color: rgba(255,255,255,0.18); }
-  footer.site-footer { border-top-color: rgba(255,255,255,0.08); color: #a3a0b0; }
+  .card { background: rgba(255,255,255,0.035); }
 
   .hero {
     padding: 64px 0 40px;

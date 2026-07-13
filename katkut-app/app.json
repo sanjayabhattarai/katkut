@@ -50,7 +50,8 @@
       "expo-font",
       "expo-asset",
       "expo-apple-authentication",
-      "./plugins/withReleaseSigning.js"
+      "./plugins/withReleaseSigning.js",
+      "./plugins/withUnifiedIosSigning.js"
     ]
   }
 }

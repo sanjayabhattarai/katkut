@@ -42,7 +42,14 @@ final class ProxyTranscoder {
     var audioReader: AVAssetReader?
     var audioReaderOutput: AVAssetReaderTrackOutput?
     if let audioTrack = asset.tracks(withMediaType: .audio).first {
-      let input = AVAssetWriterInput(mediaType: .audio, outputSettings: nil)
+      // BUG FIX: without a sourceFormatHint, AVAssetWriter can't validate a passthrough
+      // (outputSettings: nil) audio format against the .mp4 container up front, so canAdd(_:)
+      // conservatively returns false for every clip regardless of its actual source codec —
+      // matching the observed 100% proxy-generation failure rate ("Cannot add audio input to
+      // writer"). Passing the source track's own format description lets AVAssetWriter validate
+      // it correctly instead of guessing.
+      let formatHint = audioTrack.formatDescriptions.first as! CMFormatDescription?
+      let input = AVAssetWriterInput(mediaType: .audio, outputSettings: nil, sourceFormatHint: formatHint)
       input.expectsMediaDataInRealTime = false
       try writer.addAudioInput(input)
       audioInput = input

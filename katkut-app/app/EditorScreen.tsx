@@ -23,6 +23,7 @@ import { colors, radius, space, type } from './theme';
 import { uriMapFromAnalyses } from './resultEdl';
 import { useClipThumbnails } from './useClipThumbnails';
 import { renderPhotoClip } from './photoClips';
+import { generateProxies } from './proxies';
 import { useEdlHistory } from './useEdlHistory';
 import { VideoAnalysis } from '../native';
 import {
@@ -105,6 +106,15 @@ export default function EditorScreen({ analyses, initialEdl, onBack, onExport, p
   const [extraAnalyses, setExtraAnalyses] = useState<AnalysisClip[]>([]);
   const allAnalyses = useMemo(() => [...analyses, ...extraAnalyses], [analyses, extraAnalyses]);
 
+  // BUG FIX: clips added mid-edit (handleAddMedia) never got a proxy generated — proxyByClipId
+  // only ever covers the clips that existed at Processing time, so an added clip always fell back
+  // to its full-resolution original in preview. Originals have no blurred-fill baked into their
+  // pixels (only the proxy pipeline does that, per ProxyTranscoder on both platforms — the
+  // preview player itself has no live compositing capability on either Android or iOS), so a
+  // landscape/square added clip previewed with plain letterboxing even though export was always
+  // correct. Generated the same way ProcessingScreen generates the initial set (see proxies.ts).
+  const [extraProxies, setExtraProxies] = useState<Map<string, string>>(new Map());
+
   // Freshly rendered photo preview clips (clipId → mp4), regenerated when a photo is trimmed so the
   // preview length matches its new duration. Overrides the proxies handed in from Processing.
   const [photoProxies, setPhotoProxies] = useState<Map<string, string>>(new Map());
@@ -118,10 +128,12 @@ export default function EditorScreen({ analyses, initialEdl, onBack, onExport, p
     if (proxyByClipId) {
       for (const [clipId, uri] of proxyByClipId) m.set(clipId, uri);
     }
+    // proxies for clips added mid-edit (handleAddMedia) — see extraProxies above
+    for (const [clipId, uri] of extraProxies) m.set(clipId, uri);
     // freshly regenerated photo clips win over the originally-rendered proxies
     for (const [clipId, uri] of photoProxies) m.set(clipId, uri);
     return m;
-  }, [allAnalyses, proxyByClipId, photoProxies]);
+  }, [allAnalyses, proxyByClipId, extraProxies, photoProxies]);
 
   const durationByClipId = useMemo(() => {
     const m = new Map<string, number>();
@@ -235,6 +247,16 @@ export default function EditorScreen({ analyses, initialEdl, onBack, onExport, p
       });
       commit(appended);
       pendingSeekRef.current = { index: edl.timeline.length, play: false };
+
+      // Same proxy pipeline ProcessingScreen runs for the initial pick — without this, added
+      // clips fall back to their full-resolution original in preview, which has no blurred-fill
+      // baked in (see extraProxies declaration above).
+      try {
+        const newProxies = await generateProxies(newAnalyses, { ...edl, timeline: newItems });
+        setExtraProxies((prev) => new Map([...prev, ...newProxies]));
+      } catch (e) {
+        console.warn('Proxy generation for added media failed', e);
+      }
     } catch (e) {
       console.warn('Add media failed', e);
     } finally {

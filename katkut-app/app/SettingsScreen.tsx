@@ -33,7 +33,7 @@ import {
   AuthUser,
 } from '../services';
 
-const MARKETING_SITE_URL = 'https://katkut-dekc.vercel.app';
+const MARKETING_SITE_URL = 'https://katkut.app';
 const MARKETING_UPGRADE_URL = `${MARKETING_SITE_URL}/upgrade`;
 const CONTACT_EMAIL = 'khelset.com@gmail.com';
 // Stripe's hosted Customer Portal — lets a Pro member view/cancel their own subscription.

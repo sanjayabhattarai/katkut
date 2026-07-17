@@ -5,7 +5,7 @@ import { supabase } from './supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const DELETE_ACCOUNT_URL = 'https://katkut-dekc.vercel.app/api/delete-account';
+const DELETE_ACCOUNT_URL = 'https://katkut.app/api/delete-account';
 
 export interface AuthUser {
   id: string;

@@ -86,10 +86,8 @@
     </p>
   </div>
   <script>
-    // Test-mode Payment Link for the $3.99/month "Katkut AI Pro" price. Swap for the live-mode
-    // equivalent (Stripe Dashboard > Test mode OFF > Payment Links > New) as part of the sandbox
-    // → live cutover — see doc/STRIPE_GO_LIVE_CHECKLIST.md.
-    var STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/test_4gM3cu8ux5ZO8MJall5sA01';
+    // Live Payment Link for the $3.99/month "Katkut AI Pro" price.
+    var STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/eVq6oGfQq8A63jgeLWgA800';
 
     var uid = new URLSearchParams(window.location.search).get('uid');
     var btn = document.getElementById('subscribe-btn');

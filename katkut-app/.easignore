@@ -1,0 +1,24 @@
+# EAS Build does NOT respect .gitignore for its upload archive by default — it archives the
+# whole working directory (minus node_modules) unless told otherwise here. Confirmed root cause
+# of a real build failure: the local android/ folder (gitignored, regenerated locally via
+# `expo prebuild` for Android Studio dev) carries a native build cache (android/app/.cxx/) full
+# of absolute Windows paths baked in from this machine. Uploaded as-is to EAS's Linux build
+# servers, those paths don't exist there, breaking Gradle's autolinking project resolution
+# (react-native-worklets was the first to fail, but the same rot affects any autolinked module).
+# This is the same class of bug already hit and fixed during the iOS port (§4.6 of the old iOS
+# port report): never carry a locally-generated native folder across environments, regenerate
+# instead. Excluding /android and /ios here means EAS's own `expo prebuild` always runs fresh,
+# server-side, with zero local-machine contamination possible.
+/android
+/ios
+
+# Same reasoning, smaller scale — local Expo module native build artifacts, already gitignored,
+# no reason to ever upload them.
+modules/*/android/build/
+modules/*/android/.cxx/
+modules/*/android/.gradle/
+modules/*/ios/build/
+
+# Editor/OS cruft, never needed for a build.
+.expo/
+.git/

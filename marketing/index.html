@@ -52,21 +52,10 @@
     max-width: 540px;
     margin: 0 auto 30px;
   }
-  .hero-ctas { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-  .store-badge {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 18px;
-    border-radius: 12px;
-    background: #000;
-    border: 1px solid rgba(255,255,255,0.16);
-    color: #fff !important;
-  }
-  .store-badge:hover { text-decoration: none; opacity: 0.85; }
-  .store-badge-icon { width: 26px; height: 26px; flex-shrink: 0; }
-  .store-badge-text { display: flex; flex-direction: column; line-height: 1.2; text-align: left; font-size: 15.5px; font-weight: 700; }
-  .store-badge-text small { font-size: 10px; font-weight: 500; color: #cfcfd6; }
+  .hero-ctas { display: flex; gap: 14px; justify-content: center; align-items: center; flex-wrap: wrap; }
+  .store-badge { display: block; line-height: 0; border-radius: 10px; overflow: hidden; }
+  .store-badge:hover { opacity: 0.85; }
+  .store-badge img { display: block; height: 48px; width: auto; }
   .hero-trust {
     margin: 22px 0 0;
     font-size: 13.5px;
@@ -175,25 +164,10 @@
       sequences, and hands you a ready-to-post 9:16 reel, right on your phone.</p>
       <div class="hero-ctas">
         <a class="store-badge" href="https://apps.apple.com/app/id6790313795" aria-label="Download on the App Store">
-          <svg class="store-badge-icon" viewBox="0 0 384 512" fill="currentColor"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
-          <span class="store-badge-text"><small>Download on the</small>App Store</span>
+          <img src="/assets/app-store-badge.png" alt="Download on the App Store">
         </a>
         <a class="store-badge" href="https://play.google.com/store/apps/details?id=com.katkut.app" aria-label="Get it on Google Play">
-          <svg class="store-badge-icon" viewBox="0 0 24 24">
-            <defs>
-              <linearGradient id="playTop" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#00d2ff"/>
-                <stop offset="1" stop-color="#00f076"/>
-              </linearGradient>
-              <linearGradient id="playBottom" x1="0" y1="1" x2="1" y2="0">
-                <stop offset="0" stop-color="#ff3a44"/>
-                <stop offset="1" stop-color="#ffd500"/>
-              </linearGradient>
-            </defs>
-            <polygon points="4,3 20,12 4,12" fill="url(#playTop)"/>
-            <polygon points="4,12 20,12 4,21" fill="url(#playBottom)"/>
-          </svg>
-          <span class="store-badge-text"><small>GET IT ON</small>Google Play</span>
+          <img src="/assets/google-play-badge.png" alt="Get it on Google Play">
         </a>
       </div>
       <p class="hero-trust">100% on-device &nbsp;·&nbsp; Nothing ever uploaded &nbsp;·&nbsp; Free to start</p>

@@ -91,6 +91,19 @@ export async function signInWithApple() {
     token: credential.identityToken,
   });
   if (error) throw error;
+
+  // BUG FIX: Apple sends the user's name only on the very first authorization ever granted to
+  // this app — every sign-in after that has credential.fullName entirely empty, by Apple's own
+  // design (they don't retain or resend it). Previously this was never captured at all, so it
+  // was lost the moment it arrived and the app had no name to show, ever, for that account —
+  // exactly why Apple sign-ins always fell back to the generic "Creator" placeholder while Google
+  // sign-ins (whose name Supabase captures automatically from the OAuth profile) showed correctly.
+  const nameParts = [credential.fullName?.givenName, credential.fullName?.familyName].filter(
+    (part): part is string => !!part,
+  );
+  if (nameParts.length > 0) {
+    await supabase.auth.updateUser({ data: { full_name: nameParts.join(' ') } });
+  }
 }
 
 export async function signOut() {

@@ -9,7 +9,7 @@ import SplashScreen from './app/SplashScreen';
 import HomeScreen from './app/HomeScreen';
 import SettingsScreen from './app/SettingsScreen';
 import VibeSheet from './app/VibeSheet';
-import OptionsScreen, { LengthRange } from './app/OptionsScreen';
+import OptionsScreen, { AudioMode, LengthRange } from './app/OptionsScreen';
 import ProcessingScreen from './app/ProcessingScreen';
 import ResultScreen from './app/ResultScreen';
 import EditorScreen from './app/EditorScreen';
@@ -32,7 +32,7 @@ export default function App() {
   const [vibeId, setVibeId] = useState<string>('auto');
   // length + audio chosen on the options screen, fed into selection
   const [lengthRange, setLengthRange] = useState<LengthRange | null>(null);
-  const [muteAll, setMuteAll] = useState(true);
+  const [audioMode, setAudioMode] = useState<AudioMode>('smart');
   // set when there wasn't enough footage to reach the requested length
   const [lengthNotice, setLengthNotice] = useState<{ requested: number; actual: number } | null>(null);
   // clipId → low-res preview-proxy URI (preview only; export uses originals)
@@ -78,9 +78,9 @@ export default function App() {
     setScreen('options');
   }
 
-  function handleGenerate(length: LengthRange, mute: boolean) {
+  function handleGenerate(length: LengthRange, mode: AudioMode) {
     setLengthRange(length);
-    setMuteAll(mute);
+    setAudioMode(mode);
     setScreen('processing');
   }
 
@@ -166,7 +166,7 @@ export default function App() {
           clips={clips}
           vibeId={vibeId}
           lengthRange={lengthRange}
-          muteAll={muteAll}
+          audioMode={audioMode}
           onDone={handleAnalysisDone}
         />
       )}

@@ -12,10 +12,12 @@ export interface LengthRange {
   max: number;
 }
 
+export type AudioMode = 'smart' | 'muteAll' | 'unmuteAll';
+
 export interface OptionsScreenProps {
   vibeId: string;
   onBack: () => void;
-  onGenerate: (length: LengthRange, muteAll: boolean) => void;
+  onGenerate: (length: LengthRange, audioMode: AudioMode) => void;
 }
 
 const LENGTH_OPTIONS: { id: string; label: string; min: number; max: number }[] = [
@@ -32,13 +34,13 @@ const BRAND_GRADIENT = ['#9B51E0', '#00C6FF'] as const;
 export default function OptionsScreen({ vibeId, onBack, onGenerate }: OptionsScreenProps) {
   const insets = useSafeAreaInsets();
   const [lengthId, setLengthId] = useState('s30');
-  const [muteAll, setMuteAll] = useState(false); // default: Let KatKut AI decide
+  const [audioMode, setAudioMode] = useState<AudioMode>('smart'); // default: Let KatKut AI decide
 
   const vibeLabel = VIBE_CHOICES.find((v) => v.id === vibeId)?.label ?? 'Auto';
 
   function handleGenerate() {
     const opt = LENGTH_OPTIONS.find((o) => o.id === lengthId) ?? LENGTH_OPTIONS[1];
-    onGenerate({ min: opt.min, max: opt.max }, muteAll);
+    onGenerate({ min: opt.min, max: opt.max }, audioMode);
   }
 
   return (
@@ -93,10 +95,10 @@ export default function OptionsScreen({ vibeId, onBack, onGenerate }: OptionsScr
           <Text style={styles.sectionLabel}>Mute all clips?</Text>
           <View style={styles.muteList}>
             <PressableScale
-              onPress={() => setMuteAll(false)}
-              style={[styles.muteOption, !muteAll && styles.muteOptionActive]}
+              onPress={() => setAudioMode('smart')}
+              style={[styles.muteOption, audioMode === 'smart' && styles.muteOptionActive]}
             >
-              {!muteAll && (
+              {audioMode === 'smart' && (
                 <LinearGradient
                   colors={['rgba(0,198,255,0.14)', 'rgba(155,81,224,0.02)'] as const}
                   style={StyleSheet.absoluteFill}
@@ -105,19 +107,19 @@ export default function OptionsScreen({ vibeId, onBack, onGenerate }: OptionsScr
                 />
               )}
               <View style={styles.muteTextBlock}>
-                <Text style={[styles.muteText, !muteAll && styles.muteTextActive]}>Let KatKut AI decide</Text>
+                <Text style={[styles.muteText, audioMode === 'smart' && styles.muteTextActive]}>Let KatKut AI decide</Text>
                 <Text style={styles.muteSubtext}>Keeps loud, meaningful moments — mutes the rest</Text>
               </View>
-              <View style={[styles.radio, !muteAll && styles.radioActive]}>
-                {!muteAll && <Check size={13} color="#09090B" strokeWidth={3.5} />}
+              <View style={[styles.radio, audioMode === 'smart' && styles.radioActive]}>
+                {audioMode === 'smart' && <Check size={13} color="#09090B" strokeWidth={3.5} />}
               </View>
             </PressableScale>
 
             <PressableScale
-              onPress={() => setMuteAll(true)}
-              style={[styles.muteOption, muteAll && styles.muteOptionActive]}
+              onPress={() => setAudioMode('muteAll')}
+              style={[styles.muteOption, audioMode === 'muteAll' && styles.muteOptionActive]}
             >
-              {muteAll && (
+              {audioMode === 'muteAll' && (
                 <LinearGradient
                   colors={['rgba(0,198,255,0.14)', 'rgba(155,81,224,0.02)'] as const}
                   style={StyleSheet.absoluteFill}
@@ -126,11 +128,32 @@ export default function OptionsScreen({ vibeId, onBack, onGenerate }: OptionsScr
                 />
               )}
               <View style={styles.muteTextBlock}>
-                <Text style={[styles.muteText, muteAll && styles.muteTextActive]}>Yes, mute all</Text>
+                <Text style={[styles.muteText, audioMode === 'muteAll' && styles.muteTextActive]}>Yes, mute all</Text>
                 <Text style={styles.muteSubtext}>Silent — you'll add your own voiceover or music</Text>
               </View>
-              <View style={[styles.radio, muteAll && styles.radioActive]}>
-                {muteAll && <Check size={13} color="#09090B" strokeWidth={3.5} />}
+              <View style={[styles.radio, audioMode === 'muteAll' && styles.radioActive]}>
+                {audioMode === 'muteAll' && <Check size={13} color="#09090B" strokeWidth={3.5} />}
+              </View>
+            </PressableScale>
+
+            <PressableScale
+              onPress={() => setAudioMode('unmuteAll')}
+              style={[styles.muteOption, audioMode === 'unmuteAll' && styles.muteOptionActive]}
+            >
+              {audioMode === 'unmuteAll' && (
+                <LinearGradient
+                  colors={['rgba(0,198,255,0.14)', 'rgba(155,81,224,0.02)'] as const}
+                  style={StyleSheet.absoluteFill}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                />
+              )}
+              <View style={styles.muteTextBlock}>
+                <Text style={[styles.muteText, audioMode === 'unmuteAll' && styles.muteTextActive]}>No, keep all</Text>
+                <Text style={styles.muteSubtext}>Every clip keeps its original sound</Text>
+              </View>
+              <View style={[styles.radio, audioMode === 'unmuteAll' && styles.radioActive]}>
+                {audioMode === 'unmuteAll' && <Check size={13} color="#09090B" strokeWidth={3.5} />}
               </View>
             </PressableScale>
           </View>

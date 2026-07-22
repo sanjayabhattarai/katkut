@@ -14,6 +14,7 @@ import { Sparkles } from 'lucide-react-native';
 import { VideoAnalysis } from '../native';
 import { AnalysisClip, Edl, PhotoRef, PHOTO_DURATION, buildReel } from '../core';
 import { generateProxies } from './proxies';
+import { AudioMode } from './OptionsScreen';
 import { PickedClip } from './types';
 import { space } from './theme';
 
@@ -33,7 +34,7 @@ export interface ProcessingScreenProps {
   clips: PickedClip[];
   vibeId: string;
   lengthRange?: { min: number; max: number } | null;
-  muteAll?: boolean;
+  audioMode?: AudioMode;
   onDone: (analyses: AnalysisClip[], edl: Edl, proxies: Map<string, string>) => void;
 }
 
@@ -51,7 +52,7 @@ export default function ProcessingScreen({
   clips,
   vibeId,
   lengthRange,
-  muteAll = true,
+  audioMode = 'smart',
   onDone,
 }: ProcessingScreenProps) {
   const [progress, setProgress] = useState(0);
@@ -130,9 +131,12 @@ export default function ProcessingScreen({
         setProgress(0.72);
         setStatusText('Designing the timeline...');
         const selected = buildReel(analyses, vibeId, { lengthMin: length.min, lengthMax: length.max }, photos);
-        const edl = muteAll
-          ? { ...selected, timeline: selected.timeline.map((t) => ({ ...t, muted: true })) }
-          : selected;
+        const edl =
+          audioMode === 'muteAll'
+            ? { ...selected, timeline: selected.timeline.map((t) => ({ ...t, muted: true })) }
+            : audioMode === 'unmuteAll'
+              ? { ...selected, timeline: selected.timeline.map((t) => ({ ...t, muted: false })) }
+              : selected;
 
         await new Promise(r => setTimeout(r, 600));
 
@@ -156,7 +160,7 @@ export default function ProcessingScreen({
         setError(e instanceof Error ? e.message : String(e));
       }
     })();
-  }, [clips, vibeId, lengthRange, muteAll, onDone]);
+  }, [clips, vibeId, lengthRange, audioMode, onDone]);
 
   if (error) {
     return (

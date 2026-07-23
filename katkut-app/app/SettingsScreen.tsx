@@ -28,6 +28,7 @@ import {
   deleteAccount,
   getCurrentUser,
   getEntitlement,
+  getProPriceString,
   isPurchaseCancelled,
   purchasePro,
   restorePurchases,
@@ -65,6 +66,29 @@ function GoogleMark({ size = 20 }: { size?: number }) {
       <Path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.347 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z" />
       <Path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.581C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" />
     </Svg>
+  );
+}
+
+// Apple review guidance (and common rejection reason) wants subscription terms stated in the
+// app's own UI before the native purchase sheet appears, not just relying on the system sheet's
+// own price/duration display. Shown only on iOS, right where the purchase flow is initiated.
+function ProDisclosure({ price }: { price: string | null }) {
+  return (
+    <Text style={styles.proDisclosure}>
+      KatKut Pro auto-renews monthly{price ? ` at ${price}` : ''} until cancelled — manage or cancel
+      anytime in Settings. By continuing you agree to our{' '}
+      <Text style={styles.proDisclosureLink} onPress={() => Linking.openURL(`${MARKETING_SITE_URL}/terms`)}>
+        Terms of Service
+      </Text>{' '}
+      and{' '}
+      <Text
+        style={styles.proDisclosureLink}
+        onPress={() => Linking.openURL(`${MARKETING_SITE_URL}/privacy-policy`)}
+      >
+        Privacy Policy
+      </Text>
+      .
+    </Text>
   );
 }
 
@@ -117,6 +141,11 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
   const [clearingCache, setClearingCache] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [restoringPurchases, setRestoringPurchases] = useState(false);
+  const [proPrice, setProPrice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (Platform.OS === 'ios') getProPriceString().then(setProPrice);
+  }, []);
 
   // Re-checks every time this screen mounts, since App.tsx unmounts/remounts screens rather than
   // keeping them alive.
@@ -521,6 +550,7 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
                   </View>
                 </PressableScale>
               )}
+              {Platform.OS === 'ios' && !isPro && <ProDisclosure price={proPrice} />}
             </View>
           ) : (
             <View style={styles.authCard}>
@@ -529,6 +559,7 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
               </View>
               <Text style={styles.getProTitle}>Unlock Pro</Text>
               <Text style={styles.getProSubtitle}>Sign in and upgrade to remove the watermark and use the app without ads.</Text>
+              {Platform.OS === 'ios' && <ProDisclosure price={proPrice} />}
 
               <PressableScale
                 style={[styles.googleButton, signingIn && styles.googleButtonDisabled]}
@@ -734,6 +765,17 @@ const styles = StyleSheet.create({
   upgradeButtonText: {
     ...type.button,
     color: '#FFFFFF',
+  },
+  proDisclosure: {
+    ...type.caption,
+    color: colors.text.muted,
+    textAlign: 'center',
+    marginTop: space.sm,
+    lineHeight: 16,
+  },
+  proDisclosureLink: {
+    color: colors.text.secondary,
+    textDecorationLine: 'underline',
   },
 
   /* Not signed in — auth card */

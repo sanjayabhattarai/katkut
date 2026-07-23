@@ -55,13 +55,32 @@ export async function getLocalProEntitlement(): Promise<boolean> {
   }
 }
 
+async function getProPackage() {
+  const offerings = await Purchases.getOfferings();
+  return offerings.current?.availablePackages[0] ?? null;
+}
+
 /** Presents the native purchase sheet for the default offering's first package. */
 export async function purchasePro(): Promise<boolean> {
-  const offerings = await Purchases.getOfferings();
-  const pkg = offerings.current?.availablePackages[0];
+  const pkg = await getProPackage();
   if (!pkg) throw new Error('Pro subscription is not available right now.');
   const { customerInfo } = await Purchases.purchasePackage(pkg);
   return isProEntitled(customerInfo);
+}
+
+/**
+ * Localized price string for the Pro package (e.g. "$3.99", "€3.99") — App Store prices are
+ * VAT-inclusive and vary by storefront, so this must come from the SDK rather than being
+ * hardcoded. Used to show accurate terms in the app's own paywall text before the native purchase
+ * sheet appears, alongside the sheet's own price display. Null if offerings haven't loaded yet.
+ */
+export async function getProPriceString(): Promise<string | null> {
+  try {
+    const pkg = await getProPackage();
+    return pkg?.product.priceString ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /** True if `e` is the user dismissing the purchase sheet — not a real error, same treatment as

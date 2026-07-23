@@ -8,6 +8,7 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
 import {
+  Check,
   ChevronLeft,
   ChevronRight,
   Crown,
@@ -46,6 +47,10 @@ const CONTACT_EMAIL = 'khelset.com@gmail.com';
 // state directly. This is the TEST MODE portal link (Stripe Dashboard > Test mode > Settings >
 // Billing > Customer portal) — swap for the live-mode link before production release.
 const STRIPE_CUSTOMER_PORTAL_URL = 'https://billing.stripe.com/p/login/test_7sY28qh13bk88MJctt5sA00';
+// Android/Web only, as a fallback display price — the actual configured Stripe Payment Link base
+// price (see marketing/upgrade). iOS shows the real localized price from RevenueCat's offerings
+// instead (services/purchases.ts's getProPriceString) since Apple's price varies by storefront.
+const STRIPE_BASE_PRICE = '$3.99';
 
 // Same brand gradient (sampled from the actual app icon) used for the "premium" accent across
 // Export/Options/Result/Processing — colors.ai.default is a softer stand-in, not the real logo color.
@@ -89,6 +94,17 @@ function ProDisclosure({ price }: { price: string | null }) {
       </Text>
       .
     </Text>
+  );
+}
+
+function ProFeatureRow({ label }: { label: string }) {
+  return (
+    <View style={styles.featureRow}>
+      <View style={styles.featureCheck}>
+        <Check size={12} color="#FFFFFF" strokeWidth={3} />
+      </View>
+      <Text style={styles.featureLabel}>{label}</Text>
+    </View>
   );
 }
 
@@ -442,6 +458,16 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
           },
         ]
       : []),
+    ...(user && isPro
+      ? [
+          {
+            icon: <Crown size={16} color={colors.text.secondary} strokeWidth={2} />,
+            label: 'Manage or Cancel Subscription',
+            onPress: handleManageSubscription,
+            loading: openingPortal,
+          },
+        ]
+      : []),
     ...(user
       ? [
           {
@@ -460,6 +486,11 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
           },
         ]
       : []),
+    {
+      icon: <ExternalLink size={16} color={colors.text.secondary} strokeWidth={2} />,
+      label: 'Visit Website',
+      onPress: handleWebAccount,
+    },
   ];
 
   return (
@@ -518,19 +549,10 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
               </View>
 
               {isPro ? (
-                <PressableScale style={styles.manageButton} onPress={handleManageSubscription} disabled={openingPortal}>
-                  <LinearGradient
-                    colors={BRAND_GRADIENT}
-                    style={StyleSheet.absoluteFill}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                  />
-                  {openingPortal ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
-                  ) : (
-                    <Text style={styles.manageButtonText}>Manage or Cancel Subscription</Text>
-                  )}
-                </PressableScale>
+                <View style={styles.proStatusRow}>
+                  <Check size={14} color={BRAND_PURPLE} strokeWidth={3} />
+                  <Text style={styles.proStatusText}>You're on KatKut Pro. No watermark, no ads.</Text>
+                </View>
               ) : (
                 <PressableScale style={styles.upgradeButtonShadow} onPress={handleUpgrade} disabled={openingCheckout}>
                   <View style={styles.upgradeButton}>
@@ -543,13 +565,12 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
                     {openingCheckout ? (
                       <ActivityIndicator size="small" color="#FFFFFF" />
                     ) : (
-                      <Text style={styles.upgradeButtonText}>
-                        {Platform.OS === 'ios' ? 'Upgrade to Pro' : 'View Premium Options on Web'}
-                      </Text>
+                      <Text style={styles.upgradeButtonText}>Exports without watermark</Text>
                     )}
                   </View>
                 </PressableScale>
               )}
+              {!isPro && <Text style={styles.coffeeSubtext}>Costs just a cup of coffee.</Text>}
               {Platform.OS === 'ios' && !isPro && <ProDisclosure price={proPrice} />}
             </View>
           ) : (
@@ -557,9 +578,14 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
               <View style={styles.logoContainer}>
                 <Image source={require('../assets/katkutai_icon.png')} style={styles.logo} resizeMode="contain" />
               </View>
-              <Text style={styles.getProTitle}>Unlock Pro</Text>
-              <Text style={styles.getProSubtitle}>Sign in and upgrade to remove the watermark and use the app without ads.</Text>
-              {Platform.OS === 'ios' && <ProDisclosure price={proPrice} />}
+              <Text style={styles.getProTitle}>Unlock KatKut Pro</Text>
+              <View style={styles.featureList}>
+                <ProFeatureRow label="Export videos without the watermark" />
+                <ProFeatureRow label="No ads, ever" />
+              </View>
+              <Text style={styles.priceLine}>
+                Less than a cup of coffee — {(Platform.OS === 'ios' ? proPrice : null) ?? STRIPE_BASE_PRICE}/month
+              </Text>
 
               <PressableScale
                 style={[styles.googleButton, signingIn && styles.googleButtonDisabled]}
@@ -586,10 +612,7 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
                 />
               )}
 
-              <PressableScale style={styles.webAccountLink} onPress={handleWebAccount}>
-                <Text style={styles.webAccountLinkText}>Go to Web Account</Text>
-                <ExternalLink size={13} color={colors.text.muted} strokeWidth={2} />
-              </PressableScale>
+              {Platform.OS === 'ios' && <ProDisclosure price={proPrice} />}
             </View>
           )}
 
@@ -731,17 +754,44 @@ const styles = StyleSheet.create({
     ...type.caption,
     color: '#FFFFFF',
   },
-  manageButton: {
+  proStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.xs,
+    marginTop: space.xs,
+  },
+  proStatusText: {
+    ...type.bodySm,
+    color: colors.text.secondary,
+  },
+  featureList: {
     width: '100%',
+    gap: space.xs,
+    marginBottom: space.md,
+  },
+  priceLine: {
+    ...type.bodySm,
+    fontWeight: '700',
+    color: colors.text.primary,
+    textAlign: 'center',
+    marginBottom: space.lg,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+  },
+  featureCheck: {
+    width: 18,
+    height: 18,
+    borderRadius: radius.full,
+    backgroundColor: BRAND_PURPLE,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: radius.md,
-    paddingVertical: space.md,
-    overflow: 'hidden',
   },
-  manageButtonText: {
-    ...type.button,
-    color: '#FFFFFF',
+  featureLabel: {
+    ...type.bodySm,
+    color: colors.text.primary,
   },
   // Shadow needs overflow:visible, but the gradient fill needs overflow:hidden to clip to the
   // rounded corners — split across two layers so both work (elevation alone can't fake this on Android).
@@ -759,22 +809,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radius.md,
-    paddingVertical: space.md,
+    paddingVertical: space.sm + 2,
     overflow: 'hidden',
   },
   upgradeButtonText: {
     ...type.button,
+    fontSize: 14,
     color: '#FFFFFF',
   },
-  proDisclosure: {
-    ...type.caption,
-    color: colors.text.muted,
+  coffeeSubtext: {
+    ...type.bodySm,
+    color: colors.text.secondary,
     textAlign: 'center',
     marginTop: space.sm,
-    lineHeight: 16,
+  },
+  proDisclosure: {
+    fontSize: 10,
+    fontWeight: '400',
+    color: colors.text.muted,
+    textAlign: 'center',
+    marginTop: space.md,
+    lineHeight: 14,
   },
   proDisclosureLink: {
-    color: colors.text.secondary,
+    color: colors.text.muted,
     textDecorationLine: 'underline',
   },
 
@@ -806,14 +864,8 @@ const styles = StyleSheet.create({
   getProTitle: {
     ...type.heading,
     color: colors.text.primary,
-    marginBottom: 4,
+    marginBottom: space.md,
     textAlign: 'center',
-  },
-  getProSubtitle: {
-    ...type.bodySm,
-    color: colors.text.secondary,
-    textAlign: 'center',
-    marginBottom: space.lg,
   },
   googleButton: {
     width: '100%',
@@ -839,18 +891,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 44,
     marginBottom: space.xs,
-  },
-  webAccountLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: space.sm,
-  },
-  webAccountLinkText: {
-    ...type.bodySm,
-    color: colors.text.muted,
-    fontWeight: '600',
   },
 
   /* Modular row-item list section */

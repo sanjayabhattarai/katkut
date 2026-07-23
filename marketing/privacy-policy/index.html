@@ -75,7 +75,7 @@
 
     <div class="content">
     <h1>Privacy Policy</h1>
-    <div class="updated">Last updated: July 5, 2026</div>
+    <div class="updated">Last updated: July 23, 2026</div>
 
     <p>Katkut AI ("Katkut", "we", "us") is a mobile app that helps you turn short video clips and
     photos into a ready-to-post reel. This policy explains what information we collect, how we use
@@ -88,10 +88,11 @@
     </div>
 
     <h2>1. Information we collect</h2>
-    <p><strong>Account information (only if you sign in).</strong> Signing in with Google is
-    optional. If you choose to sign in, we receive your name, email address, and profile photo from
-    your Google account via our authentication provider (Supabase), so we can identify your account
-    and, in the future, your subscription status.</p>
+    <p><strong>Account information (only if you sign in).</strong> Signing in with Google or Apple is
+    optional. If you choose to sign in, we receive your name and email address (and profile photo,
+    for Google) from your account via our authentication provider (Supabase), so we can identify
+    your account and your subscription status. If you sign in with Apple and choose to hide your
+    email, Apple gives us a private relay address instead of your real one.</p>
     <p><strong>Your media: processed on-device only.</strong> When you pick videos or photos to
     build a reel, Katkut reads them locally on your device to analyze, trim, and assemble your reel.
     <strong>These files are never uploaded to any server.</strong> All analysis, editing, and export
@@ -114,7 +115,26 @@
     </ul>
     <p>We do not sell your personal information to third parties.</p>
 
-    <h2>4. Advertising</h2>
+    <h2>4. Payments and subscriptions</h2>
+    <p>Katkut Pro removes the watermark from your exports. How your payment is processed depends on
+    your platform:</p>
+    <ul>
+      <li><strong>Android and Web:</strong> subscriptions are purchased through
+      <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe</a>, our payment
+      processor. Katkut never receives or stores your card details — Stripe handles that
+      directly.</li>
+      <li><strong>iOS:</strong> subscriptions are purchased through Apple's In-App Purchase system,
+      billed to your Apple ID. We use
+      <a href="https://www.revenuecat.com/privacy" target="_blank" rel="noopener">RevenueCat</a> to
+      manage subscription status; it receives your purchase receipt and a device-generated
+      identifier, not your payment details. See also
+      <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">Apple's privacy
+      policy</a>.</li>
+    </ul>
+    <p>In both cases, we only receive whether your subscription is active — never your payment
+    method or billing details.</p>
+
+    <h2>5. Advertising</h2>
     <p>Katkut is free to use, supported by ads shown to free-tier users (alongside a watermark on
     exported reels). Subscribing to Pro removes both. Ads are delivered by third-party advertising
     networks, which may collect information such as your device's advertising identifier,
@@ -124,26 +144,26 @@
     <p>This section will be updated with the specific ad network(s) we use and links to their
     privacy policies once integrated.</p>
 
-    <h2>5. Third-party services</h2>
+    <h2>6. Third-party services</h2>
     <p>We use <a href="https://supabase.com/privacy" target="_blank" rel="noopener">Supabase</a> to
-    handle account sign-in and store basic account information (name, email, profile photo). We do
-    not currently use any analytics SDKs. See the "Advertising" section above for our ad network
-    disclosures.</p>
+    handle account sign-in and store basic account information. We use Stripe and/or RevenueCat to
+    process subscription payments — see "Payments and subscriptions" above. We do not currently use
+    any analytics SDKs. See the "Advertising" section above for our ad network disclosures.</p>
 
-    <h2>6. Data retention and deletion</h2>
+    <h2>7. Data retention and deletion</h2>
     <p>Your reels, drafts, and picked media stay on your device and are removed when you delete the
     app or the project itself. If you signed in, you can request deletion of your account
     information at any time by contacting us (below).</p>
 
-    <h2>7. Children's privacy</h2>
+    <h2>8. Children's privacy</h2>
     <p>Katkut is not directed at children under 13, and we do not knowingly collect personal
     information from children under 13.</p>
 
-    <h2>8. Changes to this policy</h2>
+    <h2>9. Changes to this policy</h2>
     <p>We may update this policy as the app evolves. We'll update the "Last updated" date above when
     we do.</p>
 
-    <h2>9. Contact us</h2>
+    <h2>10. Contact us</h2>
     <p>Questions about this policy, or want your account data deleted? Email us at
     <a href="mailto:khelset.com@gmail.com">khelset.com@gmail.com</a>.</p>
     </div>

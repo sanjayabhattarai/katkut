@@ -9,7 +9,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Rect, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Check, ChevronLeft, Film, Download } from 'lucide-react-native';
+import { Check, ChevronLeft, Film, Download, Info } from 'lucide-react-native';
 import * as VideoThumbnails from 'expo-video-thumbnails';
 import { exportReel } from './exportReel';
 import { saveToGallery, shareReel } from './share';
@@ -53,6 +53,7 @@ export default function ExportScreen({ analyses, edl, vibeId, projectId, onDone,
   const [prog, setProg] = useState(0);
   const [thumb, setThumb] = useState<string | null>(null);
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
+  const [isPro, setIsPro] = useState(false);
   const rampRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -79,8 +80,9 @@ export default function ExportScreen({ analyses, edl, vibeId, projectId, onDone,
       setPhase({ kind: 'running', label: 'Rendering video...' });
       // Checked fresh at export time (not cached from screen mount) so a subscription bought
       // moments ago in the browser and returned from is reflected immediately.
-      const { isPro } = await getEntitlement();
-      const { outputPath } = await exportReel(edl, analyses, resolution, isPro);
+      const { isPro: proNow } = await getEntitlement();
+      setIsPro(proNow);
+      const { outputPath } = await exportReel(edl, analyses, resolution, proNow);
 
       setPhase({ kind: 'running', label: 'Saving to gallery...' });
       await saveToGallery(outputPath);
@@ -198,6 +200,14 @@ export default function ExportScreen({ analyses, edl, vibeId, projectId, onDone,
               <View style={styles.statusRow}>
                 <Check size={16} color="#00C6FF" strokeWidth={3} />
                 <Text style={[styles.statusText, { color: '#00C6FF', fontWeight: '600' }]}>Successfully saved to gallery</Text>
+              </View>
+            )}
+            {isDone && !isPro && (
+              <View style={styles.watermarkNoteRow}>
+                <Info size={12} color="#71717A" strokeWidth={2} />
+                <Text style={styles.watermarkNoteText}>
+                  Subscribe to KatKut Pro from Settings to export without the watermark
+                </Text>
               </View>
             )}
           </View>
@@ -424,6 +434,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#E4E4E7',
     fontWeight: '500',
+  },
+  watermarkNoteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 10,
+    paddingHorizontal: space.md,
+  },
+  watermarkNoteText: {
+    fontSize: 11,
+    color: '#71717A',
+    textAlign: 'center',
+    lineHeight: 15,
   },
   resSection: {
     gap: 14,

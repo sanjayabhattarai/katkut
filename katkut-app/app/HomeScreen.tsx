@@ -11,6 +11,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   FolderOpen,
   Film,
@@ -20,6 +21,7 @@ import {
   ChevronRight,
   Grid3X3,
   Settings,
+  Info,
 } from 'lucide-react-native';
 import { colors, radius, space, type } from './theme';
 import PressableScale from './components/PressableScale';
@@ -130,6 +132,9 @@ export default function HomeScreen({ onNewProject, onOpenDraft, onOpenExport, on
   const [exports, setExports] = useState<Project[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
+  // True first-time state — no in-progress draft and nothing exported yet. Gets one unified hero
+  // instead of the two separate small empty-state cards stacking on top of each other.
+  const isBrandNewUser = drafts.length === 0 && exports.length === 0;
 
   const loadProjects = useCallback(async () => {
     const [d, e] = await Promise.all([listDrafts(), listExports()]);
@@ -241,55 +246,94 @@ export default function HomeScreen({ onNewProject, onOpenDraft, onOpenExport, on
           </View>
         )}
 
-        {/* Exports Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionHeaderLeft}>
-              <Film size={16} color="#34C759" strokeWidth={2} />
-              <Text style={styles.sectionTitle}>Completed</Text>
+        {/* Exports Section — hidden for a brand-new user in favor of the hero below */}
+        {!isBrandNewUser && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionHeaderLeft}>
+                <Film size={16} color="#34C759" strokeWidth={2} />
+                <Text style={styles.sectionTitle}>Completed</Text>
+                {exports.length > 0 && (
+                  <View style={styles.countBadge}>
+                    <Text style={styles.countText}>{exports.length}</Text>
+                  </View>
+                )}
+              </View>
               {exports.length > 0 && (
-                <View style={styles.countBadge}>
-                  <Text style={styles.countText}>{exports.length}</Text>
-                </View>
+                <Pressable style={styles.viewAllButton}>
+                  <Grid3X3 size={14} color="#8E8E93" />
+                  <Text style={styles.viewAllText}>View All</Text>
+                </Pressable>
               )}
             </View>
-            {exports.length > 0 && (
-              <Pressable style={styles.viewAllButton}>
-                <Grid3X3 size={14} color="#8E8E93" />
-                <Text style={styles.viewAllText}>View All</Text>
-              </Pressable>
+
+            {exports.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Film size={32} color="#48484A" strokeWidth={1.5} />
+                <Text style={styles.emptyTitle}>No exports yet</Text>
+                <Text style={styles.emptyDescription}>
+                  Your completed videos will appear here
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.exportsGrid}>
+                {exports.slice(0, 6).map((project) => (
+                  <ExportCard
+                    key={project.id}
+                    project={project}
+                    onPress={() => onOpenExport(project)}
+                  />
+                ))}
+              </View>
             )}
           </View>
+        )}
 
-          {exports.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Film size={32} color="#48484A" strokeWidth={1.5} />
-              <Text style={styles.emptyTitle}>No exports yet</Text>
-              <Text style={styles.emptyDescription}>
-                Your completed videos will appear here
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.exportsGrid}>
-              {exports.slice(0, 6).map((project) => (
-                <ExportCard
-                  key={project.id}
-                  project={project}
-                  onPress={() => onOpenExport(project)}
-                />
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* Empty Drafts State */}
-        {drafts.length === 0 && (
+        {/* Empty Drafts State — only when something's already been exported before but no draft
+            is currently in progress; the brand-new-user case below covers having neither. */}
+        {drafts.length === 0 && exports.length > 0 && (
           <View style={styles.emptyState}>
             <FolderOpen size={32} color="#48484A" strokeWidth={1.5} />
             <Text style={styles.emptyTitle}>Start creating</Text>
             <Text style={styles.emptyDescription}>
               Tap "New Project" to begin your first AI-powered edit
             </Text>
+          </View>
+        )}
+
+        {/* First-time hero — no draft and nothing exported yet */}
+        {isBrandNewUser && (
+          <View style={styles.heroEmptyState}>
+            <View style={styles.heroEmptyIconOuter}>
+              <LinearGradient
+                colors={['rgba(155,81,224,0.20)', 'rgba(0,198,255,0.04)']}
+                style={styles.heroEmptyIconGlow}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+              />
+              <View style={styles.heroEmptyIconCore}>
+                <Film size={30} color="#00C6FF" strokeWidth={1.75} />
+              </View>
+            </View>
+
+            <Text style={styles.heroEmptyTitle}>Turn your clips into a reel</Text>
+            <Text style={styles.heroEmptySubtitle}>
+              Got a pile of video clips? Import them and KatKut AI does the editing for you.
+            </Text>
+
+            <PressableScale style={styles.heroEmptyPriceCard} onPress={onSettings}>
+              <LinearGradient
+                colors={['rgba(155,81,224,0.10)', 'rgba(0,198,255,0.03)']}
+                style={StyleSheet.absoluteFill}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              />
+              <Info size={13} color="#00C6FF" strokeWidth={2.25} style={{ marginTop: 2 }} />
+              <Text style={styles.heroEmptyPriceText}>
+                Free exports include a watermark — <Text style={styles.heroEmptyPriceEmphasis}>remove it with Pro</Text>,
+                about the price of a coffee a month ($3.99/month)
+              </Text>
+            </PressableScale>
           </View>
         )}
       </ScrollView>
@@ -571,5 +615,84 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     textAlign: 'center',
     lineHeight: 18,
+  },
+
+  // First-time hero (no draft, nothing exported yet) — same gradient-orb language as the
+  // Processing/Export/Settings screens, rather than a flat grey placeholder.
+  heroEmptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: space.xl,
+    paddingHorizontal: space.lg,
+    gap: 10,
+  },
+  heroEmptyIconOuter: {
+    width: 96,
+    height: 96,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  heroEmptyIconGlow: {
+    position: 'absolute',
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 1.5,
+    borderColor: 'rgba(0, 198, 255, 0.10)',
+  },
+  heroEmptyIconCore: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#161519',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.06)',
+    shadowColor: '#00C6FF',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    elevation: 6,
+  },
+  heroEmptyTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    letterSpacing: -0.4,
+  },
+  heroEmptySubtitle: {
+    fontSize: 14,
+    color: '#8E8E93',
+    textAlign: 'center',
+    lineHeight: 20,
+    maxWidth: 280,
+    marginBottom: 6,
+  },
+  heroEmptyPriceCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    width: '100%',
+    maxWidth: 340,
+    marginTop: space.sm,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(0,198,255,0.16)',
+    overflow: 'hidden',
+  },
+  heroEmptyPriceText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#A1A1AA',
+    lineHeight: 17,
+  },
+  heroEmptyPriceEmphasis: {
+    color: '#00C6FF',
+    fontWeight: '700',
   },
 });

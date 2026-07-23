@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MoreHorizontal, Pause, Pencil, Play, Sparkles, Wand2, X, LucideIcon } from 'lucide-react-native';
+import { Info, MoreHorizontal, Pause, Pencil, Play, Sparkles, Wand2, X, LucideIcon } from 'lucide-react-native';
 import EdlPlayer, { EdlPlayerHandle } from './EdlPlayer';
 import { uriMapFromAnalyses } from './resultEdl';
 import { AnalysisClip, Edl } from '../core';
@@ -118,6 +118,14 @@ export default function ResultScreen({
 
       {/* actions below the preview */}
       <View style={styles.actions}>
+        <View style={styles.qualityNoteRow}>
+          <Info size={12} color="#71717A" strokeWidth={2} />
+          <Text style={styles.qualityNoteText}>
+            Don't worry! Preview quality may be reduced for smooth processing, your final export
+            will be full HD.
+          </Text>
+        </View>
+
         {/* Modernized Primary Gradient CTA Action Button */}
         <PressableScale style={styles.exportButtonContainer} onPress={onExport}>
           <LinearGradient
@@ -249,8 +257,22 @@ const styles = StyleSheet.create({
     paddingTop: space.lg, 
     gap: space.md 
   },
+  qualityNoteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: space.md,
+  },
+  qualityNoteText: {
+    fontSize: 11,
+    color: '#71717A',
+    textAlign: 'center',
+    flexShrink: 1,
+  },
   exportButtonContainer: {
-    borderRadius: 28,
+    alignSelf: 'center',
+    borderRadius: 24,
     overflow: 'hidden',
     shadowColor: '#9B51E0',
     shadowOffset: { width: 0, height: 6 },
@@ -259,14 +281,15 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   exportGradientBtn: {
-    height: 54,
+    height: 46,
+    paddingHorizontal: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   exportButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     letterSpacing: -0.2,
   },

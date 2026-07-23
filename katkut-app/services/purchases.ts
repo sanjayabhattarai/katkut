@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import Purchases, { CustomerInfo, PurchasesError, PURCHASES_ERROR_CODE } from 'react-native-purchases';
+import Purchases, { CustomerInfo, LOG_LEVEL, PurchasesError, PURCHASES_ERROR_CODE } from 'react-native-purchases';
 
 const REVENUECAT_IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY;
 // Must exactly match the Entitlement identifier in the RevenueCat dashboard (Entitlements tab) —
@@ -17,6 +17,10 @@ let configured = false;
  */
 export function initPurchases(): void {
   if (Platform.OS !== 'ios' || configured || !REVENUECAT_IOS_KEY) return;
+  // Must be called before configure() to take effect from the start. RevenueCat's own default is
+  // DEBUG in dev / INFO in release — both print every API request/response; ERROR keeps release
+  // builds quiet except for real problems, while dev builds keep full SDK detail for debugging.
+  Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.DEBUG : LOG_LEVEL.ERROR);
   Purchases.configure({ apiKey: REVENUECAT_IOS_KEY });
   configured = true;
 }
@@ -64,8 +68,15 @@ async function getProPackage() {
 export async function purchasePro(): Promise<boolean> {
   const pkg = await getProPackage();
   if (!pkg) throw new Error('Pro subscription is not available right now.');
-  const { customerInfo } = await Purchases.purchasePackage(pkg);
-  return isProEntitled(customerInfo);
+  try {
+    const { customerInfo } = await Purchases.purchasePackage(pkg);
+    const isPro = isProEntitled(customerInfo);
+    console.log(`[KatKut] Purchase ${isPro ? 'succeeded' : 'completed, entitlement not yet active'}: ${pkg.identifier}`);
+    return isPro;
+  } catch (e) {
+    console.log(`[KatKut] Purchase ${isPurchaseCancelled(e) ? 'cancelled by user' : 'failed'}: ${pkg.identifier}`);
+    throw e;
+  }
 }
 
 /**
@@ -96,5 +107,7 @@ export function isPurchaseCancelled(e: unknown): boolean {
 /** Apple requires a working Restore Purchases entry point — a missing one is a common rejection. */
 export async function restorePurchases(): Promise<boolean> {
   const customerInfo = await Purchases.restorePurchases();
-  return isProEntitled(customerInfo);
+  const isPro = isProEntitled(customerInfo);
+  console.log(`[KatKut] Restore ${isPro ? 'found an active Pro subscription' : 'found nothing to restore'}`);
+  return isPro;
 }

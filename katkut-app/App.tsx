@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -16,7 +16,7 @@ import EditorScreen from './app/EditorScreen';
 import ExportScreen from './app/ExportScreen';
 import { PickedClip } from './app/types';
 import { AnalysisClip, Edl } from './core';
-import { Project, newProjectId, saveDraft } from './services';
+import { Project, newProjectId, saveDraft, getCurrentUser, initPurchases, loginPurchases } from './services';
 
 type Screen = 'splash' | 'home' | 'settings' | 'vibe' | 'options' | 'processing' | 'result' | 'editor' | 'export';
 
@@ -42,6 +42,16 @@ export default function App() {
   // true from the moment "New Project" is tapped through the picker closing + mapping —
   // covers the otherwise-blank gap before the Vibe sheet appears
   const [pickingClips, setPickingClips] = useState(false);
+
+  // RevenueCat (iOS purchases only — no-op elsewhere, see services/purchases.ts) must be
+  // configured and, if a session already persisted across app restarts, logged in before any
+  // purchase or entitlement check happens.
+  useEffect(() => {
+    initPurchases();
+    getCurrentUser().then((u) => {
+      if (u) loginPurchases(u.id);
+    });
+  }, []);
 
   // New Project → open the system picker directly (it requests permission on first use).
   async function startNewProject() {

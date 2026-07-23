@@ -2,6 +2,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { supabase } from './supabase';
+import { loginPurchases, logoutPurchases } from './purchases';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -49,11 +50,15 @@ export async function signInWithGoogle() {
     throw new Error('No session tokens returned from Supabase.');
   }
 
-  const { error: sessionError } = await supabase.auth.setSession({
+  const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
     access_token,
     refresh_token,
   });
   if (sessionError) throw sessionError;
+
+  // RevenueCat (iOS purchases) must be tied to this same Supabase user id before any purchase —
+  // see services/purchases.ts. No-op on Android/Web where the SDK is never configured.
+  if (sessionData.user) await loginPurchases(sessionData.user.id);
 }
 
 // Apple guideline 4.8: an app offering third-party sign-in (Google) must also offer Sign in with
@@ -86,11 +91,13 @@ export async function signInWithApple() {
     throw new Error('Apple did not return an identity token.');
   }
 
-  const { error } = await supabase.auth.signInWithIdToken({
+  const { data, error } = await supabase.auth.signInWithIdToken({
     provider: 'apple',
     token: credential.identityToken,
   });
   if (error) throw error;
+
+  if (data.user) await loginPurchases(data.user.id);
 
   // BUG FIX: Apple sends the user's name only on the very first authorization ever granted to
   // this app — every sign-in after that has credential.fullName entirely empty, by Apple's own
@@ -107,6 +114,7 @@ export async function signInWithApple() {
 }
 
 export async function signOut() {
+  await logoutPurchases();
   await supabase.auth.signOut();
 }
 

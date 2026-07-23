@@ -16,6 +16,7 @@ import {
   Info,
   LogOut,
   Mail,
+  RotateCcw,
   Shield,
   Trash2,
   User,
@@ -27,6 +28,9 @@ import {
   deleteAccount,
   getCurrentUser,
   getEntitlement,
+  isPurchaseCancelled,
+  purchasePro,
+  restorePurchases,
   signInWithApple,
   signInWithGoogle,
   signOut,
@@ -112,6 +116,7 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
   const [openingPortal, setOpeningPortal] = useState(false);
   const [clearingCache, setClearingCache] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [restoringPurchases, setRestoringPurchases] = useState(false);
 
   // Re-checks every time this screen mounts, since App.tsx unmounts/remounts screens rather than
   // keeping them alive.
@@ -140,17 +145,44 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
     return () => sub.remove();
   }, []);
 
+  // iOS only — presents the native Apple purchase sheet via RevenueCat. Cancellation (the user
+  // just dismissing the sheet) is swallowed quietly, same treatment as ERR_REQUEST_CANCELED for
+  // Apple sign-in below.
+  async function presentPaywall() {
+    setOpeningCheckout(true);
+    try {
+      const proNow = await purchasePro();
+      if (proNow) setIsPro(true);
+    } catch (e) {
+      if (!isPurchaseCancelled(e)) {
+        Alert.alert('Purchase failed', e instanceof Error ? e.message : String(e));
+      }
+    } finally {
+      setOpeningCheckout(false);
+    }
+  }
+
   async function handleSignIn() {
     setSigningIn(true);
+    let signedInUser: AuthUser | null = null;
+    let alreadyPro = false;
     try {
       await signInWithGoogle();
       const [u, entitlement] = await Promise.all([getCurrentUser(), getEntitlement()]);
+      signedInUser = u;
+      alreadyPro = entitlement.isPro;
       setUser(u);
       setIsPro(entitlement.isPro);
     } catch (e) {
       Alert.alert('Sign-in failed', e instanceof Error ? e.message : String(e));
+      return;
     } finally {
       setSigningIn(false);
+    }
+    // "Get Pro" is the framing of this whole card (see authCard below) — on iOS, sign-in
+    // immediately continues into the native purchase sheet rather than requiring a second tap.
+    if (Platform.OS === 'ios' && signedInUser && !alreadyPro) {
+      await presentPaywall();
     }
   }
 
@@ -159,15 +191,41 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
   // Apple sheet (see signInWithApple's ERR_REQUEST_CANCELED handling).
   async function handleSignInWithApple() {
     setSigningIn(true);
+    let signedInUser: AuthUser | null = null;
+    let alreadyPro = false;
     try {
       await signInWithApple();
       const [u, entitlement] = await Promise.all([getCurrentUser(), getEntitlement()]);
+      signedInUser = u;
+      alreadyPro = entitlement.isPro;
       setUser(u);
       setIsPro(entitlement.isPro);
     } catch (e) {
       Alert.alert('Sign-in failed', e instanceof Error ? e.message : String(e));
+      return;
     } finally {
       setSigningIn(false);
+    }
+    if (signedInUser && !alreadyPro) {
+      await presentPaywall();
+    }
+  }
+
+  async function handleRestorePurchases() {
+    setRestoringPurchases(true);
+    try {
+      const proNow = await restorePurchases();
+      setIsPro(proNow);
+      Alert.alert(
+        proNow ? 'Purchases Restored' : 'Nothing to Restore',
+        proNow
+          ? 'Your Pro subscription has been restored.'
+          : 'No active purchase was found for this Apple ID.',
+      );
+    } catch (e) {
+      Alert.alert('Restore failed', e instanceof Error ? e.message : String(e));
+    } finally {
+      setRestoringPurchases(false);
     }
   }
 
@@ -229,12 +287,17 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
     );
   }
 
-  // App Review compliance: this must open the device's actual default browser (fully backgrounds
-  // the app), not expo-web-browser's openBrowserAsync — that always renders an in-app browser tab
-  // (SFSafariViewController / Custom Tabs), which is the opposite of what "external purchase"
-  // review guidelines require. Linking.openURL is the one that truly leaves the app.
+  // Android/Web: App Review compliance requires this open the device's actual default browser
+  // (fully backgrounds the app), not expo-web-browser's openBrowserAsync — that always renders an
+  // in-app browser tab (SFSafariViewController / Custom Tabs), the opposite of what "external
+  // purchase" review guidelines require. Linking.openURL is the one that truly leaves the app.
+  // iOS: no external link at all (Apple 3.1.1 forbids it) — presents the native paywall instead.
   async function handleUpgrade() {
     if (!user) return;
+    if (Platform.OS === 'ios') {
+      await presentPaywall();
+      return;
+    }
     setOpeningCheckout(true);
     try {
       await Linking.openURL(`${MARKETING_UPGRADE_URL}?uid=${encodeURIComponent(user.id)}`);
@@ -243,10 +306,14 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
     }
   }
 
+  // iOS subscribers bought through Apple IAP, not Stripe — Apple's own subscriptions page is the
+  // only place that can manage/cancel that. Android/Web keep the Stripe Customer Portal.
   async function handleManageSubscription() {
     setOpeningPortal(true);
     try {
-      await Linking.openURL(STRIPE_CUSTOMER_PORTAL_URL);
+      await Linking.openURL(
+        Platform.OS === 'ios' ? 'https://apps.apple.com/account/subscriptions' : STRIPE_CUSTOMER_PORTAL_URL,
+      );
     } finally {
       setOpeningPortal(false);
     }
@@ -333,6 +400,19 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
       onPress: handleClearCache,
       loading: clearingCache,
     },
+    // Apple requires a working Restore Purchases entry point wherever IAP is offered — a missing
+    // one is a common rejection. Only meaningful once signed in (restoring while signed out would
+    // attach the purchase to an anonymous RevenueCat id the webhook can't map to a profile).
+    ...(Platform.OS === 'ios' && user
+      ? [
+          {
+            icon: <RotateCcw size={16} color={colors.text.secondary} strokeWidth={2} />,
+            label: 'Restore Purchases',
+            onPress: handleRestorePurchases,
+            loading: restoringPurchases,
+          },
+        ]
+      : []),
     ...(user
       ? [
           {
@@ -434,7 +514,9 @@ export default function SettingsScreen({ onBack }: SettingsScreenProps) {
                     {openingCheckout ? (
                       <ActivityIndicator size="small" color="#FFFFFF" />
                     ) : (
-                      <Text style={styles.upgradeButtonText}>View Premium Options on Web</Text>
+                      <Text style={styles.upgradeButtonText}>
+                        {Platform.OS === 'ios' ? 'Upgrade to Pro' : 'View Premium Options on Web'}
+                      </Text>
                     )}
                   </View>
                 </PressableScale>

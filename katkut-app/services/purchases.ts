@@ -2,7 +2,9 @@ import { Platform } from 'react-native';
 import Purchases, { CustomerInfo, PurchasesError, PURCHASES_ERROR_CODE } from 'react-native-purchases';
 
 const REVENUECAT_IOS_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY;
-const PRO_ENTITLEMENT_ID = 'pro';
+// Must exactly match the Entitlement identifier in the RevenueCat dashboard (Entitlements tab) —
+// this project's was created as "KatKut AI Pro", not the lowercase "pro" the plan doc suggested.
+const PRO_ENTITLEMENT_ID = 'KatKut AI Pro';
 
 let configured = false;
 
